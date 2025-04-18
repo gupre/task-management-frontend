@@ -1,5 +1,14 @@
-import React, { useEffect, useState } from "react";
-import { Box, Typography, Button, Modal, Paper } from "@mui/material";
+import React, { useEffect, useState, useCallback } from "react";
+import {
+    Box,
+    Typography,
+    Button,
+    Modal,
+    Paper,
+    Grid,
+    Stack,
+    Fade,
+} from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState, AppDispatch } from "../store";
 import {
@@ -8,7 +17,7 @@ import {
     createProject,
     updateProject,
     fetchMyProjects,
-    fetchProjectUsers
+    fetchProjectUsers,
 } from "../store/projectSlice";
 import ProjectCard from "../components/projects/ProjectCard";
 import ProjectForm from "../components/projects/ProjectForm";
@@ -21,92 +30,194 @@ const ProjectBoard: React.FC = () => {
     const projects = useSelector((state: RootState) => state.projects.items);
     const [openForm, setOpenForm] = useState(false);
     const [editingProject, setEditingProject] = useState<Project | null>(null);
-    const [openUsersProjectId, setOpenUsersProjectId] = useState<number | null | undefined>(null);
+    const [openUsersProjectId, setOpenUsersProjectId] = useState<number | null>(null);
 
     useEffect(() => {
-        console.log("Полученные проекты:", projects);
         dispatch(fetchProjects());
-    }, [dispatch]);
-
-    useEffect(() => {
         dispatch(fetchMyProjects());
     }, [dispatch]);
 
-    const handleOpenForm = (project?: Project) => {
+    const handleOpenForm = useCallback((project?: Project) => {
         setEditingProject(project || null);
         setOpenForm(true);
-    };
+    }, []);
 
-    const handleCloseForm = () => {
+    const handleCloseForm = useCallback(() => {
         setOpenForm(false);
-    };
+        setEditingProject(null);
+    }, []);
 
-    const handleSaveProject = (project: Project) => {
-        if (editingProject) {
-            dispatch(updateProject(project));
-        } else {
-            dispatch(createProject(project));
+  const handleSaveProject = useCallback(
+    (projectIdOrProject: number | Partial<Project>, changedFields?: Partial<Project>) => {
+      if (typeof projectIdOrProject === "number") {
+        // Редактирование существующего проекта по id
+        if (changedFields) {
+          dispatch(updateProject({ ...changedFields, projectId: projectIdOrProject } as Project));
         }
-        handleCloseForm();
-    };
+      } else {
+        // Создание нового проекта
+        dispatch(createProject(projectIdOrProject as Project));
+      }
+      handleCloseForm();
+    },
+    [dispatch, handleCloseForm]
+  );
 
-    const handleOpenUsers = (projectId: number | undefined) => {
-        if (projectId === undefined) {
-            console.error("Некорректный ID проекта:", projectId);
-            return;
-        }
+
+
+  const handleOpenUsers = useCallback((projectId?: number) => {
+        if (!projectId) return;
         setOpenUsersProjectId(projectId);
-    };
+    }, []);
 
-    const handleCloseUsers = () => {
+    const handleCloseUsers = useCallback(() => {
         setOpenUsersProjectId(null);
-    };
-
-    useEffect(() => {
-        console.log("Состояние openUsersProjectId:", openUsersProjectId);
-    }, [openUsersProjectId]);
+    }, []);
 
     return (
-        <Box sx={{ p: 3 }}>
-            <Typography variant="h4" gutterBottom>
-                Управление проектами
-            </Typography>
+      <Box sx={{ p: { xs: 2, sm: 4 } }}>
+          <Stack direction="row" justifyContent="space-between" alignItems="center" mb={3}>
+              <Typography variant="h4" fontWeight={600}>
+                  Управление проектами
+              </Typography>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={() => handleOpenForm()}
+                sx={{ borderRadius: 2, textTransform: "none", px: 3 }}
+              >
+                  Новый проект
+              </Button>
+          </Stack>
 
-            <Button variant="contained" color="primary" sx={{ mb: 2 }} onClick={() => handleOpenForm()}>
-                Добавить проект
-            </Button>
+          <Grid container spacing={2}>
+              {projects.map((project) => (
+                <Grid item key={project.projectId} xs={12} sm={6} md={4}>
+                    <ProjectCard
+                      project={project}
+                      onEdit={() => handleOpenForm(project)}
+                      onDelete={() => dispatch(deleteProject(project.projectId))}
+                      onManageUsers={() => handleOpenUsers(project.projectId)}
+                    />
+                </Grid>
+              ))}
+          </Grid>
 
-            <Box>
-                {projects.map((project) => {
-                    console.log("Проект:", project);
-                    return (
-                        <ProjectCard
-                            key={project.projectId}
-                            project={project}
-                            onEdit={() => handleOpenForm(project)}
-                            onDelete={() => dispatch(deleteProject(project.projectId))}
-                            onManageUsers={() => handleOpenUsers(project.projectId)}
-                        />
-                    );
-                })}
-            </Box>
+          <Modal open={!!openUsersProjectId} onClose={handleCloseUsers} closeAfterTransition>
+              <Fade in={!!openUsersProjectId}>
+                  <Paper
+                    sx={{
+                      p: 4,
+                      width: { xs: "95%", sm: "90%", md: "80%", lg: "70%" },
+                      maxWidth: 1200,
+                      mx: "auto",
+                      mt: 10,
+                      borderRadius: 3,
+                      boxShadow: 10,
+                    }}
+                  >
+                    {openUsersProjectId && (
+                      <Box
+                        sx={{
+                          mt: 2,
+                          p: 3,
+                          borderRadius: 3,
+                          backgroundColor: "#fafafa",
+                          boxShadow: 4,
+                        }}
+                      >
+                        <Typography
+                          variant="h5"
+                          sx={{
+                            textAlign: "center",
+                            fontWeight: 700,
+                            color: "#1976d2",
+                            mb: 3,
+                            textTransform: "uppercase",
+                            letterSpacing: 1,
+                          }}
+                        >
+                          Управление участниками проекта
+                        </Typography>
 
-            {openUsersProjectId !== null  && (
-                <Modal open={!!openUsersProjectId} onClose={handleCloseUsers}>
-                    <Paper sx={{ p: 3, width: 500, margin: "100px auto" }}>
-                        <ProjectUsers projectId={openUsersProjectId} />
-                        <AddUserToProject projectId={openUsersProjectId} onUserAdded={() => dispatch(fetchProjectUsers(openUsersProjectId))} />
-                        <Button onClick={handleCloseUsers} sx={{ mt: 2 }}>Закрыть</Button>
-                    </Paper>
-                </Modal>
-            )}
+                        <Grid container spacing={3} alignItems="stretch">
+                          <Grid item xs={12} md={6}>
+                            <Paper
+                              elevation={3}
+                              sx={{
+                                p: 2,
+                                height: "100%",
+                                maxHeight: 500,
+                                overflowY: "auto",
+                                borderRadius: 3,
+                                backgroundColor: "#ffffff",
+                              }}
+                            >
+                              <ProjectUsers projectId={openUsersProjectId} />
+                            </Paper>
+                          </Grid>
 
-            <Modal open={openForm} onClose={handleCloseForm}>
-                <Paper sx={{ p: 3, width: 400, margin: "100px auto" }}>
-                    <ProjectForm initialProject={editingProject || undefined} onSave={handleSaveProject} onCancel={handleCloseForm} />
-                </Paper>
-            </Modal>
-        </Box>
+                          <Grid item xs={12} md={6}>
+                            <Paper
+                              elevation={3}
+                              sx={{
+                                p: 2,
+                                height: "100%",
+                                borderRadius: 3,
+                                backgroundColor: "#ffffff",
+                                display: "flex",
+                                flexDirection: "column",
+                                justifyContent: "space-between",
+                              }}
+                            >
+                              <AddUserToProject
+                                projectId={openUsersProjectId}
+                                onUserAdded={() => dispatch(fetchProjectUsers(openUsersProjectId))}
+                              />
+                            </Paper>
+                          </Grid>
+                        </Grid>
+
+                        <Button
+                          fullWidth
+                          variant="outlined"
+                          sx={{
+                            mt: 4,
+                            borderRadius: 3,
+                            py: 1.5,
+                            fontWeight: 500,
+                          }}
+                          onClick={handleCloseUsers}
+                        >
+                          Закрыть
+                        </Button>
+                      </Box>
+                    )}
+                  </Paper>
+              </Fade>
+          </Modal>
+
+          <Modal open={openForm} onClose={handleCloseForm} closeAfterTransition>
+              <Fade in={openForm}>
+                  <Paper
+                    sx={{
+                        p: 4,
+                        width: { xs: "90%", sm: 400 },
+                        mx: "auto",
+                        mt: 10,
+                        borderRadius: 3,
+                        boxShadow: 10,
+                    }}
+                  >
+                      <ProjectForm
+                        initialProject={editingProject || undefined}
+                        onSave={handleSaveProject}
+                        onCancel={handleCloseForm}
+                      />
+                  </Paper>
+              </Fade>
+          </Modal>
+      </Box>
     );
 };
 

@@ -1,5 +1,22 @@
+export interface CreateTask {
+    taskId?: number;
+    name: string;
+    description: string;
+    status: "planned" | "progress" | "end";
+    priority: "urgently" | "high" | "normal" | "low";
+    assignmentDate?: string;
+    hoursSpent?: number;
+    dueDate?: string;
+    estimatedHours?: number;
+    projectId: number;
+    userId?: number;
+    departmentId?: number;
+    // project: Project;
+    // user?: User;
+    // department?: Department;
+}
 
-    export interface Task {
+export interface Task {
         taskId?: number;
         name: string;
         description: string;
@@ -18,7 +35,7 @@
         history: History[];
         reports: ReportTask[];
 
-    }
+}
 
 
 export interface Project {
@@ -55,22 +72,20 @@ export interface User {
 }
 
 export interface Timezone {
-    id: number;
+    timezoneId: number;
     name: string;
     offset: number;
-
-    // users: User[];
+    users: User[];
 }
 
 
-interface ProjectUser {
+export interface ProjectUser {
     userId: number;
     projectId: number;
     user: User;
     project: Project;
 }
 
-// Interface for Department model
 export interface Department {
     departmentId: number;
     name: string;

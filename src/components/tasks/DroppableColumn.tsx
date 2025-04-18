@@ -3,7 +3,7 @@ import {
     Droppable,
     DroppableProvided,
 } from "@hello-pangea/dnd";
-import { Box, Typography } from "@mui/material";
+import { Box, Typography, Badge } from "@mui/material";
 import { Task } from "../../types";
 import DraggableTaskCard from "./DraggableTaskCard";
 
@@ -12,6 +12,7 @@ interface Props {
     tasks: Task[];
     onEdit: (task: Task) => void;
     onDelete: (taskId: number | undefined) => void;
+    isActive?: boolean;
 }
 
 const statusLabels: Record<Task["status"], string> = {
@@ -20,40 +21,55 @@ const statusLabels: Record<Task["status"], string> = {
     end: "Завершено",
 };
 
-const DroppableColumn: React.FC<Props> = ({ status, tasks, onEdit, onDelete }) => {
+const DroppableColumn: React.FC<Props> = ({ status, tasks, onEdit, onDelete, isActive }) => {
     return (
-        <Droppable droppableId={status}>
-            {(provided: DroppableProvided) => (
-                <Box
-                    ref={provided.innerRef}
-                    {...provided.droppableProps}
-                    sx={{
-                        minHeight: "500px",
-                        p: 2,
-                        bgcolor: "#f4f6f8",
-                        borderRadius: 2,
-                        border: "1px solid #ddd",
-                        flexGrow: 1,
-                    }}
-                >
-                    <Typography variant="h6" sx={{ mb: 2 }}>
-                        {statusLabels[status]}
-                    </Typography>
+      <Droppable droppableId={status}>
+          {(provided: DroppableProvided) => (
+            <Box
+              ref={provided.innerRef}
+              {...provided.droppableProps}
+              sx={{
+                  minHeight: "500px",
+                  p: 2,
+                  bgcolor: isActive ? "#e3f2fd" : "#f4f6f8", // подсветка активной колонки
+                  borderRadius: 2,
+                  border: isActive ? "2px solid #2196f3" : "1px solid #ddd", // рамка
+                  flex: 1,
+                  transition: "0.3s",
+                  position: "relative",
+              }}
+            >
+                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
+                    <Typography variant="h6">{statusLabels[status]}</Typography>
 
-                    {tasks.map((task, index) => (
-                        <DraggableTaskCard
-                            key={task.taskId}
-                            task={task}
-                            index={index}
-                            onEdit={() => onEdit(task)}  // Передаем task в onEdit
-                            onDelete={() => onDelete(task.taskId)}  // Передаем taskId в onDelete
-                        />
-                    ))}
+                    <Badge
+                      badgeContent={tasks.length}
+                      color="primary"
+                      sx={{ position: "absolute", top: 0, right: 0 }}
+                    />
 
-                    {provided.placeholder}
                 </Box>
-            )}
-        </Droppable>
+
+                {tasks.map((task, index) => (
+                  <DraggableTaskCard
+                    key={task.taskId}
+                    task={task}
+                    index={index}
+                    onEdit={() => onEdit(task)}
+                    onDelete={() => onDelete(task.taskId)}
+                  />
+                ))}
+
+                {tasks.length === 0 && (
+                  <Typography variant="body2" color="textSecondary" sx={{ textAlign: "center", mt: 2 }}>
+                      Нет задач в этом статусе
+                  </Typography>
+                )}
+
+                {provided.placeholder}
+            </Box>
+          )}
+      </Droppable>
     );
 };
 

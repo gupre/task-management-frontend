@@ -145,12 +145,15 @@ export const removeUserFromProject = createAsyncThunk <
     { state: RootState }
 >(
     "projects/removeUserFromProject",
-    async ({ projectId, userId }: { projectId: number | undefined, userId: number }, { rejectWithValue }) => {
+    async ({ projectId, userId }: { projectId: number | undefined, userId: number }, { rejectWithValue, getState }) => {
         try {
-            const res = await fetch(`http://localhost:4200/api/user/projects/${projectId}/users/${userId}`, {
+            const token = getToken(getState());
+            if (!token) throw new Error("Токен отсутствует");
+
+            const res = await fetch(`http://localhost:4200/api/projects/${projectId}/users/${userId}`, {
                 method: "DELETE",
                 headers: {
-                    Authorization: `Bearer ${localStorage.getItem("token")}`,
+                    "Authorization": `Bearer ${token}`,
                 },
             });
             if (!res.ok) {
@@ -171,13 +174,15 @@ export const updateProject = createAsyncThunk<Project, Project, { state: RootSta
             const token = getToken(getState());
             if (!token) throw new Error("Токен отсутствует");
 
+            const { projectId, ...updatedFields } = projectData;
+
             const response = await fetch(`http://localhost:4200/api/projects/${projectData.projectId}`, {
-                method: "PUT",
+                method: "PATCH",
                 headers: {
                     "Content-Type": "application/json",
                     "Authorization": `Bearer ${token}`,
                 },
-                body: JSON.stringify(projectData),
+                body: JSON.stringify(updatedFields),
             });
 
             if (!response.ok) {

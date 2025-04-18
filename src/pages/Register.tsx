@@ -7,7 +7,7 @@ const Register: React.FC = () => {
     const navigate = useNavigate();
 
     const handleRegister = async (values: { email: string; password: string }) => {
-        const response = await fetch("http://localhost:4200/api/register", {
+        const response = await fetch("http://localhost:4200/api/auth/register", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from 'react'
 import {
     Box,
     TextField,
@@ -10,59 +10,91 @@ import {
     Grid,
     SelectChangeEvent,
 } from "@mui/material";
-import { useSelector } from "react-redux";
-import { RootState } from "../../store";
-import {History, ReportTask, Task, User} from "../../types";
+import { useDispatch, useSelector } from 'react-redux'
+import { AppDispatch, RootState } from '../../store'
+import { CreateTask, History, ReportTask, Task, User } from '../../types'
+import { fetchAllDepartments } from '../../store/departmentSlice'
+import { fetchProjectUsers } from '../../store/projectSlice'
 
 interface TaskFormProps {
-    initialTask?: Task;
-    onSave: (task: Task) => void;
+    initialTask?: CreateTask;
+    onSave: (task: CreateTask) => void;
     onCancel: () => void;
+    projectId: number;
 }
 
-const TaskForm: React.FC<TaskFormProps> = ({ initialTask, onSave, onCancel }) => {
-    const projects = useSelector((state: RootState) => state.projects.items);
-    // const users = useSelector((state: RootState) => state.projects.users); // предполагаем, что есть slice users
-    // const departments = useSelector((state: RootState) => state.department.items); // и departments
+const TaskForm: React.FC<TaskFormProps> = ({ projectId, initialTask, onSave, onCancel }) =>  {
+    const dispatch = useDispatch<AppDispatch>();
 
-    const [task, setTask] = useState<Omit<Task, "taskId">>(
+    const users = useSelector((state: RootState) => state.projects.users); // предполагаем, что есть slice users
+    const departments = useSelector((state: RootState) => state.department.departments);
+
+    const [task, setTask] = useState<Omit<CreateTask, "taskId">>(
         initialTask || {
             name: "",
             description: "",
             status: "planned",
             priority: "normal",
-            projectId: projects.length > 0 ? Number(projects[0].projectId) : 0,
-            assignmentDate: "",
+            projectId,
+            assignmentDate: new Date().toISOString().slice(0, 10),
             dueDate: "",
             estimatedHours: 0,
             hoursSpent: 0,
             userId: undefined,
             departmentId: undefined,
-            user: undefined,
-            history: [],
-            reports: [],
+            // user: undefined,
+            // history: [],
+            // reports: [],
         }
     );
 
+    const [errors, setErrors] = useState<{ [key: string]: string }>({});
+
+    useEffect(() => {
+        dispatch(fetchProjectUsers(projectId))
+        dispatch(fetchAllDepartments());
+    }, [dispatch, projectId]);
+
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value, type } = e.target;
-        const parsedValue = type === "number" ? Number(value) : value;
+        let parsedValue = type === "number" ? Math.max(0, Number(value)) : value;
+
+        // Если значение - дата, преобразуем его в формат yyyy-mm-dd
+        if (name === "assignmentDate" || name === "dueDate") {
+            const date = new Date(parsedValue);
+            if (!isNaN(date.getTime())) {
+                parsedValue = date.toISOString().split('T')[0]; // Формат yyyy-mm-dd
+            }
+        }
+
         setTask((prev) => ({ ...prev, [name]: parsedValue }));
     };
+
 
     const handleSelectChange = (e: SelectChangeEvent) => {
         const { name, value } = e.target;
         if (name) {
             setTask((prev) => ({
                 ...prev,
-                [name]: ["projectId", "userId", "departmentId"].includes(name) ? Number(value) : value,
+                [name]: ["userId", "departmentId"].includes(name) ? Number(value) : value,
             }));
         }
     };
 
+    const validateForm = (): boolean => {
+        let formErrors: { [key: string]: string } = {};
+        if (!task.name) formErrors.name = "Название задачи обязательно";
+        if (!task.dueDate) formErrors.dueDate = "Дедлайн обязателен";
+
+        setErrors(formErrors);
+        return Object.keys(formErrors).length === 0;
+    };
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        onSave(task);
+        if (validateForm()) {
+            onSave(task);
+        }
     };
 
     return (
@@ -76,16 +108,34 @@ const TaskForm: React.FC<TaskFormProps> = ({ initialTask, onSave, onCancel }) =>
                 mt: 4,
             }}
         >
+
             <Grid container spacing={2}>
-                <Grid item xs={12} sm={6}>
-                    <TextField
-                        fullWidth
-                        label="Название"
-                        name="name"
-                        value={task.name}
-                        onChange={handleInputChange}
-                        required
-                    />
+                <Grid item xs={12}>
+                    <Grid container spacing={2}>
+                        <Grid item xs={12}>
+                            <TextField
+                              fullWidth
+                              label="Название"
+                              name="name"
+                              value={task.name}
+                              onChange={handleInputChange}
+                              required
+                              error={!!errors.name}
+                              helperText={errors.name}
+                            />
+                        </Grid>
+                        <Grid item xs={12}>
+                            <TextField
+                              fullWidth
+                              label="Описание"
+                              name="description"
+                              value={task.description}
+                              onChange={handleInputChange}
+                              multiline
+                              rows={3}
+                            />
+                        </Grid>
+                    </Grid>
                 </Grid>
 
                 <Grid item xs={12} sm={6}>
@@ -97,18 +147,6 @@ const TaskForm: React.FC<TaskFormProps> = ({ initialTask, onSave, onCancel }) =>
                             <MenuItem value="end">Завершено</MenuItem>
                         </Select>
                     </FormControl>
-                </Grid>
-
-                <Grid item xs={12} sm={6}>
-                    <TextField
-                        fullWidth
-                        label="Описание"
-                        name="description"
-                        value={task.description}
-                        onChange={handleInputChange}
-                        multiline
-                        rows={3}
-                    />
                 </Grid>
 
                 <Grid item xs={12} sm={6}>
@@ -124,25 +162,12 @@ const TaskForm: React.FC<TaskFormProps> = ({ initialTask, onSave, onCancel }) =>
                 </Grid>
 
                 <Grid item xs={12} sm={6}>
-                    <FormControl fullWidth>
-                        <InputLabel>Проект</InputLabel>
-                        <Select name="projectId" value={`${task.projectId}`} onChange={handleSelectChange}>
-                            {projects.map((project) => (
-                                <MenuItem key={project.projectId} value={project.projectId}>
-                                    {project.name}
-                                </MenuItem>
-                            ))}
-                        </Select>
-                    </FormControl>
-                </Grid>
-
-                <Grid item xs={12} sm={6}>
                     <TextField
                         fullWidth
                         label="Дата назначения"
                         name="assignmentDate"
                         type="date"
-                        value={task.assignmentDate || ""}
+                        value={task.assignmentDate?.slice(0, 10) || ""}
                         onChange={handleInputChange}
                         InputLabelProps={{ shrink: true }}
                     />
@@ -151,12 +176,14 @@ const TaskForm: React.FC<TaskFormProps> = ({ initialTask, onSave, onCancel }) =>
                 <Grid item xs={12} sm={6}>
                     <TextField
                         fullWidth
-                        label="Дедлайн"
+                        label="Дедлайн*"
                         name="dueDate"
                         type="date"
-                        value={task.dueDate || ""}
+                        value={task.dueDate?.slice(0, 10) || ""}
                         onChange={handleInputChange}
                         InputLabelProps={{ shrink: true }}
+                        error={!!errors.dueDate}
+                        helperText={errors.dueDate}
                     />
                 </Grid>
 
@@ -184,41 +211,41 @@ const TaskForm: React.FC<TaskFormProps> = ({ initialTask, onSave, onCancel }) =>
                     />
                 </Grid>
 
-                {/*<Grid item xs={12} sm={6}>*/}
-                {/*    <FormControl fullWidth>*/}
-                {/*        <InputLabel>Исполнитель</InputLabel>*/}
-                {/*        <Select*/}
-                {/*            name="userId"*/}
-                {/*            value={task.userId ? String(task.userId) : ""}*/}
-                {/*            onChange={handleSelectChange}*/}
-                {/*        >*/}
-                {/*            <MenuItem value="">Не назначено</MenuItem>*/}
-                {/*            {users.map((user) => (*/}
-                {/*                <MenuItem key={user.user.userId} value={user.user.userId}>*/}
-                {/*                    {user.user.name}*/}
-                {/*                </MenuItem>*/}
-                {/*            ))}*/}
-                {/*        </Select>*/}
-                {/*    </FormControl>*/}
-                {/*</Grid>*/}
+                <Grid item xs={12} sm={6}>
+                    <FormControl fullWidth>
+                        <InputLabel>Исполнитель</InputLabel>
+                        <Select
+                            name="userId"
+                            value={task.userId ? String(task.userId) : ""}
+                            onChange={handleSelectChange}
+                        >
+                            <MenuItem value="">Не назначено</MenuItem>
+                            {users.map((user) => (
+                                <MenuItem key={user.user.userId} value={user.user.userId}>
+                                    {user.user.name}
+                                </MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
+                </Grid>
 
-                {/*<Grid item xs={12} sm={6}>*/}
-                {/*    <FormControl fullWidth>*/}
-                {/*        <InputLabel>Департамент</InputLabel>*/}
-                {/*        <Select*/}
-                {/*            name="departmentId"*/}
-                {/*            value={task.departmentId ? String(task.departmentId) : ""}*/}
-                {/*            onChange={handleSelectChange}*/}
-                {/*        >*/}
-                {/*            <MenuItem value="">Не указано</MenuItem>*/}
-                {/*            {departments.map((dept) => (*/}
-                {/*                <MenuItem key={dept.id} value={dept.id}>*/}
-                {/*                    {dept.name}*/}
-                {/*                </MenuItem>*/}
-                {/*            ))}*/}
-                {/*        </Select>*/}
-                {/*    </FormControl>*/}
-                {/*</Grid>*/}
+                <Grid item xs={12} sm={6}>
+                    <FormControl fullWidth>
+                        <InputLabel>Департамент</InputLabel>
+                        <Select
+                          name="departmentId"
+                          value={task.departmentId ? String(task.departmentId) : ""}
+                          onChange={handleSelectChange}
+                        >
+                            <MenuItem value="">Не указано</MenuItem>
+                            {departments.map((dept) => (
+                              <MenuItem key={dept.departmentId} value={dept.departmentId}>
+                                  {dept.name}
+                              </MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
+                </Grid>
 
                 <Grid item xs={12}>
                     <Box sx={{ display: "flex", justifyContent: "space-between", mt: 2 }}>

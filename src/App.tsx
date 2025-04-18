@@ -7,6 +7,9 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import PrivateRoute from "./components/routes/PrivateRoute";
 import ProjectBoard from "./pages/ProjectBoard";
+import AdminUserManagement from './pages/AdminUserManagement'
+import DepartmentBoard from './pages/DepartmentBoard'
+import TimeZonesBoard from './pages/TimeZonesBoard'
 
 function App() {
   return (
@@ -14,11 +17,13 @@ function App() {
           <Routes>
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
-              {/* Используем PrivateRoute для защищённых страниц */}
               <Route element={<PrivateRoute />}>
-                  <Route path="/" element={<Layout><Dashboard /></Layout>} />
-                  <Route path="/projects" element={<Layout><ProjectBoard /></Layout>} />
                   <Route path="/profile" element={<Layout><Profile /></Layout>} />
+                  <Route path="/projects" element={<Layout><ProjectBoard /></Layout>} />
+                  <Route path="/" element={<Layout><Dashboard /></Layout>} />
+                  <Route path="/admin/users" element={<Layout><AdminUserManagement /></Layout>} />
+                  <Route path="/admin/departments" element={<Layout><DepartmentBoard /></Layout>} />
+                  <Route path="/admin/time-zones" element={<Layout><TimeZonesBoard /></Layout>} />
               </Route>
           </Routes>
       </Router>

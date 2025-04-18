@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
-import { Task } from "../types";
+import { CreateTask, Task } from '../types'
 import { RootState } from "./index";
 import { getToken } from "../utils/auth";
 
@@ -52,7 +52,7 @@ export const fetchTasks = createAsyncThunk<Task[], number | undefined>(
 );
 
 // Создание задачи
-export const createTask = createAsyncThunk<Task, Task>(
+export const createTask = createAsyncThunk<Task, CreateTask>(
     "tasks/createTask",
     async (taskData, { rejectWithValue, getState }) => {
         try {
@@ -84,47 +84,117 @@ export const createTask = createAsyncThunk<Task, Task>(
     }
 );
 
-// Обновление задачи
-export const updateTask = createAsyncThunk<Task, Task>(
-    "tasks/updateTask",
-    async (taskData, { rejectWithValue, getState }) => {
-        try {
-            const state = getState() as RootState;
-            const token = getToken(state);
+export const assignUserToTask = createAsyncThunk<Task, { taskId: number; userId: number }>(
+  "tasks/assignUserToTask",
+  async ({ taskId, userId }, { rejectWithValue, getState }) => {
+      try {
+          const state = getState() as RootState;
+          const token = getToken(state);
 
-            if (!token) {
-                throw new Error("Ошибка: отсутствует токен авторизации");
-            }
+          if (!token) {
+              throw new Error("Ошибка: отсутствует токен авторизации");
+          }
 
-            const { taskId, user, history, reports, ...taskWithoutExtras  } = taskData;
+          const response = await fetch(`http://localhost:4200/api/task/${taskId}/assign/${userId}`, {
+              method: "PATCH",
+              headers: {
+                  "Content-Type": "application/json",
+                  "Authorization": `Bearer ${token}`,
+              },
+          });
 
-            const payload = {
-                ...taskWithoutExtras,
-                userId: taskData.userId ?? user?.userId,
-                historyIds: taskData.history?.map(h => h.historyId),
-                reportIds: taskData.reports?.map(r => r.reportId)
-            };
+          if (!response.ok) {
+              throw new Error(`Ошибка ${response.status}: ${response.statusText}`);
+          }
 
-            const response = await fetch(`http://localhost:4200/api/task/${taskId}`, {
-                method: "PATCH",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`,
-                },
-                body: JSON.stringify(payload ),
-            });
-
-            if (!response.ok) {
-                throw new Error(`Ошибка ${response.status}: ${response.statusText}`);
-            }
-
-            return await response.json();
-        } catch (error) {
-            console.error("Ошибка при обновлении задачи:", error);
-            return rejectWithValue(error instanceof Error ? error.message : "Неизвестная ошибка");
-        }
-    }
+          return await response.json();
+      } catch (error) {
+          console.error("Ошибка при назначении пользователя:", error);
+          return rejectWithValue(error instanceof Error ? error.message : "Неизвестная ошибка");
+      }
+  }
 );
+
+
+// Обновление задачи
+export const updateTask = createAsyncThunk<Task, Task | CreateTask>(
+  "tasks/updateTask",
+  async (taskData, { rejectWithValue, getState }) => {
+      try {
+          const state = getState() as RootState;
+          const token = getToken(state);
+
+          if (!token) {
+              throw new Error("Ошибка: отсутствует токен авторизации");
+          }
+
+          let taskId: number | undefined;
+          let assignmentDate: string | undefined;
+          let rest: any = {}; // временно any, если нужно точно — можно через типы сделать
+
+          if ('user' in taskData && 'history' in taskData && 'reports' in taskData) {
+              const { taskId: _taskId, assignmentDate: _assignmentDate, user, history, reports, ...other } = taskData;
+              taskId = _taskId;
+              assignmentDate = _assignmentDate;
+              rest = other;
+          } else {
+              const { taskId: _taskId, assignmentDate: _assignmentDate, ...other } = taskData;
+              taskId = _taskId;
+              assignmentDate = _assignmentDate;
+              rest = other;
+          }
+
+
+          const payload: any = {
+              ...rest,
+              userId: taskData.userId,
+          };
+
+          // Убираем лишнее
+          if ('project' in payload) {
+              delete payload.project;
+          }
+
+          if (
+            assignmentDate &&
+            typeof assignmentDate === "string" &&
+            !isNaN(Date.parse(assignmentDate))
+          ) {
+              payload.assignmentDate = assignmentDate;
+          } else {
+              payload.assignmentDate = new Date().toISOString().slice(0, 10);
+          }
+
+          // Проверяем наличие history и reports, только если это Task
+          if ("history" in taskData && Array.isArray(taskData.history)) {
+              payload.historyIds = taskData.history.map(h => h.historyId);
+          }
+
+          if ("reports" in taskData && Array.isArray(taskData.reports)) {
+              payload.reportIds = taskData.reports.map(r => r.reportId);
+          }
+
+          const response = await fetch(`http://localhost:4200/api/task/${taskId}`, {
+              method: "PATCH",
+              headers: {
+                  "Content-Type": "application/json",
+                  "Authorization": `Bearer ${token}`,
+              },
+              body: JSON.stringify(payload),
+          });
+
+          if (!response.ok) {
+              throw new Error(`Ошибка ${response.status}: ${response.statusText}`);
+          }
+
+          return await response.json();
+      } catch (error) {
+          console.error("Ошибка при обновлении задачи:", error);
+          return rejectWithValue(error instanceof Error ? error.message : "Неизвестная ошибка");
+      }
+  }
+);
+
 
 // Удаление задачи
 export const deleteTask = createAsyncThunk<number | undefined, number | undefined>(
@@ -176,6 +246,12 @@ export const taskSlice = createSlice({
             })
             .addCase(createTask.fulfilled, (state, action) => {
                 state.items.push(action.payload);
+            })
+            .addCase(assignUserToTask.fulfilled, (state, action) => {
+              const index = state.items.findIndex((t) => t.taskId === action.payload.taskId);
+              if (index !== -1) {
+                  state.items[index] = action.payload;
+              }
             })
             .addCase(updateTask.fulfilled, (state, action) => {
                 const index = state.items.findIndex((t) => t.taskId === action.payload.taskId);

@@ -4,6 +4,8 @@ import taskReducer from "./taskSlice";
 import projectReducer from "./projectSlice";
 import userReducer from "./userSlice";
 import timeZoneReducer from "./timeZoneSlice";
+import departmentReducer from "./departmentSlice";
+import roleReducer from "./roleSlice";
 
 export const index = configureStore({
     reducer: {
@@ -12,6 +14,8 @@ export const index = configureStore({
         projects: projectReducer,
         user: userReducer,
         timeZone: timeZoneReducer,
+        department: departmentReducer,
+        role: roleReducer,
     },
 });
 

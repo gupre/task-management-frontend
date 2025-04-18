@@ -30,12 +30,12 @@ const Dashboard: React.FC = () => {
     return (
         <div>
             <FormControl fullWidth>
-                <InputLabel>Выберите проект</InputLabel>
+                <InputLabel id="project-select-label">Выберите проект</InputLabel>
                 <Select
+                    labelId="project-select-label"
                     value={selectedProjectId ?? ""}
                     onChange={handleProjectChange}
                     label="Выберите проект"
-                    displayEmpty
                     MenuProps={{
                         PaperProps: {
                             style: {

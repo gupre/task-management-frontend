@@ -1,42 +1,77 @@
 import React from "react";
-import { Box, Select, MenuItem, FormControl, InputLabel } from "@mui/material";
+import {
+    Box,
+    Select,
+    MenuItem,
+    FormControl,
+    InputLabel,
+} from "@mui/material";
 
 interface FilterPanelProps {
-    filters: { status: string; priority: string };
+    filters: { executorId?: string; priority: string };
     onFilterChange: (filterName: string, value: string) => void;
+    executorOptions?: { id: string; name: string }[];
 }
 
-export const FilterPanel: React.FC<FilterPanelProps> = ({ filters, onFilterChange }) => {
-    return (
-        <Box sx={{ display: "flex", gap: 2, mb: 3 }}>
-            <FormControl variant="outlined" size="small" sx={{ width: 200 }}>
-                <InputLabel>Статус</InputLabel>
-                <Select
-                    value={filters.status}
-                    onChange={(e) => onFilterChange("status", e.target.value)}
-                    label="Статус"
-                >
-                    <MenuItem value="all">Все</MenuItem>
-                    <MenuItem value="planned">Запланировано</MenuItem>
-                    <MenuItem value="progress">В процессе</MenuItem>
-                    <MenuItem value="end">Завершено</MenuItem>
-                </Select>
-            </FormControl>
+const priorityOptions: Record<string, string> = {
+    urgently: "Срочно",
+    high: "Высокий",
+    normal: "Средний",
+    low: "Низкий",
+};
 
-            <FormControl variant="outlined" size="small" sx={{ width: 200 }}>
-                <InputLabel>Приоритет</InputLabel>
-                <Select
-                    value={filters.priority}
-                    onChange={(e) => onFilterChange("priority", e.target.value)}
-                    label="Приоритет"
-                >
-                    <MenuItem value="all">Все</MenuItem>
-                    <MenuItem value="urgently">Срочно</MenuItem>
-                    <MenuItem value="high">Высокий</MenuItem>
-                    <MenuItem value="normal">Средний</MenuItem>
-                    <MenuItem value="low">Низкий</MenuItem>
-                </Select>
-            </FormControl>
-        </Box>
+export const FilterPanel: React.FC<FilterPanelProps> = ({
+                                                            filters,
+                                                            onFilterChange,
+                                                            executorOptions = [],
+                                                        }) => {
+    return (
+      <Box
+        sx={{
+            display: "flex",
+            flexWrap: "wrap",
+            gap: 2,
+            mb: 3,
+            alignItems: "center",
+        }}
+      >
+          {/* Фильтр по приоритету */}
+          <FormControl variant="outlined" size="small" sx={{ width: 200 }}>
+              <InputLabel>Приоритет</InputLabel>
+              <Select
+                value={filters.priority || "all"}
+                onChange={(e) =>
+                  onFilterChange("priority", e.target.value)
+                }
+                label="Приоритет"
+              >
+                  <MenuItem value="all">Все</MenuItem>
+                  {Object.entries(priorityOptions).map(([value, label]) => (
+                    <MenuItem key={value} value={value}>
+                        {label}
+                    </MenuItem>
+                  ))}
+              </Select>
+          </FormControl>
+
+          {/* Фильтр по исполнителю */}
+          <FormControl variant="outlined" size="small" sx={{ width: 200 }}>
+              <InputLabel>Исполнитель</InputLabel>
+              <Select
+                value={filters.executorId || "all"}
+                onChange={(e) =>
+                  onFilterChange("executorId", e.target.value)
+                }
+                label="Исполнитель"
+              >
+                  <MenuItem value="all">Все</MenuItem>
+                  {executorOptions.map((executor) => (
+                    <MenuItem key={executor.id} value={executor.id}>
+                        {executor.name}
+                    </MenuItem>
+                  ))}
+              </Select>
+          </FormControl>
+      </Box>
     );
 };
