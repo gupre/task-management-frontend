@@ -227,6 +227,39 @@ export const deleteTask = createAsyncThunk<number | undefined, number | undefine
     }
 );
 
+export const updateTaskOrder = createAsyncThunk<number[], number[] >(
+  "tasks/updateOrder",
+  async (taskIds, { rejectWithValue, getState }) => {
+      try {
+          const state = getState() as RootState;
+          const token = getToken(state);
+
+          if (!token) {
+              throw new Error("Ошибка: отсутствует токен авторизации");
+          }
+
+          const response = await fetch(`http://localhost:4200/api/task/order`, {
+              method: "PATCH",
+              headers: {
+                  "Content-Type": "application/json",
+                  "Authorization": `Bearer ${token}`,
+              },
+              body: JSON.stringify({ taskIds }),
+          });
+
+          if (!response.ok) {
+              throw new Error(`Ошибка ${response.status}: ${response.statusText}`);
+          }
+
+          return taskIds;
+      } catch (error) {
+          console.error("Ошибка при обновлении порядка задач:", error);
+          return rejectWithValue(error instanceof Error ? error.message : "Неизвестная ошибка");
+      }
+  }
+);
+
+
 export const taskSlice = createSlice({
     name: "tasks",
     initialState,
