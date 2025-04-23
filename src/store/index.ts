@@ -6,6 +6,7 @@ import userReducer from "./userSlice";
 import timeZoneReducer from "./timeZoneSlice";
 import departmentReducer from "./departmentSlice";
 import roleReducer from "./roleSlice";
+import historyReducer from "./historySlice";
 
 export const index = configureStore({
     reducer: {
@@ -16,6 +17,7 @@ export const index = configureStore({
         timeZone: timeZoneReducer,
         department: departmentReducer,
         role: roleReducer,
+        history: historyReducer,
     },
 });
 

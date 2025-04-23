@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { DragDropContext, DropResult } from "@hello-pangea/dnd";
-import { Box, Typography, Button, Modal, Paper, Grid } from "@mui/material";
+import { Box, Button, Modal, Paper, Grid } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState, AppDispatch } from "../../store";
 import { fetchTasks, deleteTask, createTask, updateTask } from "../../store/taskSlice";
@@ -9,6 +9,7 @@ import { FilterPanel } from "../FilterPanel/FilterPanel";
 import TaskForm from "./TaskForm";
 import DroppableColumn from "./DroppableColumn";
 import { fetchProjectUsers } from '../../store/projectSlice'
+import TaskHistory from './TaskHistory'
 
 const STATUSES: Task["status"][] = ["planned", "progress", "end"];
 
@@ -47,13 +48,13 @@ const TaskBoard = ({ projectId }: { projectId: number }) => {
 
     const handleCloseForm = () => setOpenForm(false);
 
-    const handleSaveTask = (task: CreateTask) => {
+    const handleSaveTask = (task: Partial<CreateTask> & { taskId?: number }) => {
         if (editingTask) {
-            dispatch(updateTask(task));
+            dispatch(updateTask(task as Task));
         } else {
-            dispatch(createTask(task));
+            dispatch(createTask(task as CreateTask));
+            handleCloseForm();
         }
-        handleCloseForm();
     };
 
     const handleDeleteTask = (taskId: number | undefined) => {
@@ -133,13 +134,31 @@ const TaskBoard = ({ projectId }: { projectId: number }) => {
         </DragDropContext>
 
           <Modal open={openForm} onClose={handleCloseForm}>
-              <Paper sx={{ p: 3, width: 400, margin: "100px auto", borderRadius: 2, boxShadow: 24 }}>
-                  <TaskForm
-                    projectId={projectId}
-                    initialTask={editingTask || undefined}
-                    onSave={handleSaveTask}
-                    onCancel={handleCloseForm}
-                  />
+              <Paper   sx={{
+                  p: 2,
+                  width: "95%",
+                  maxWidth: 1600,
+                  margin: "80px auto",
+                  borderRadius: 2,
+                  boxShadow: 12,
+                  maxHeight: 'calc(100vh - 100px)',
+                  overflow: 'auto',
+              }}>
+                  <Box display="flex" gap={2}>
+                      <Box flex={1}>
+                          <TaskForm
+                            projectId={projectId}
+                            initialTask={editingTask || undefined}
+                            onSave={handleSaveTask}
+                            onCancel={handleCloseForm}
+                          />
+                      </Box>
+                      {editingTask && (
+                        <Box flex={1} sx={{marginTop: `30px`}}>
+                            <TaskHistory taskId={editingTask.taskId} />
+                        </Box>
+                      )}
+                  </Box>
               </Paper>
           </Modal>
       </Box>

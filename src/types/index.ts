@@ -79,12 +79,12 @@ export interface Timezone {
 }
 
 
-export interface ProjectUser {
-    userId: number;
-    projectId: number;
-    user: User;
-    project: Project;
-}
+// export interface ProjectUser {
+//     userId: number;
+//     projectId: number;
+//     user: User;
+//     project: Project;
+// }
 
 export interface Department {
     departmentId: number;
@@ -99,22 +99,7 @@ export interface Role {
     roleId: number;
     name: string;
     users: User[];
-    permissions: RolePermissions[];
-}
-
-// Interface for RolePermissions model
-export interface RolePermissions {
-    roleId: number;
-    role: Role;
-    permissionsId: number;
-    permission: Permissions;
-}
-
-// Interface for Permissions model
-export interface Permissions {
-    permissionsId: number;
-    name: string;
-    roles: RolePermissions[];
+    // permissions: RolePermissions[];
 }
 
 // Interface for History model (tracks history of tasks and user actions)
@@ -127,6 +112,11 @@ export interface History {
     departmentId?: number;
     department?: Department;
     comment?: string;
+    createdAt?: string;
+    createdByUserId?: number;
+    createdByUser?: User;
+    createdByDepartmentId?: number;
+    createdByDepartment?: Department;
 }
 
 // Interface for ReportTask model (task-specific report)
@@ -156,3 +146,18 @@ export interface ReportProject {
     totalTasks?: number;
     reports: ReportTask[];
 }
+
+// Interface for RolePermissions model
+// export interface RolePermissions {
+//     roleId: number;
+//     role: Role;
+//     permissionsId: number;
+//     permission: Permissions;
+// }
+//
+// // Interface for Permissions model
+// export interface Permissions {
+//     permissionsId: number;
+//     name: string;
+//     roles: RolePermissions[];
+// }

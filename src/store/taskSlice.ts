@@ -2,6 +2,7 @@ import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import { CreateTask, Task } from '../types'
 import { RootState } from "./index";
 import { getToken } from "../utils/auth";
+import { jwtDecode } from 'jwt-decode'
 
 interface TaskState {
     items: Task[];
@@ -59,11 +60,16 @@ export const createTask = createAsyncThunk<Task, CreateTask>(
             const state = getState() as RootState;
             const token = getToken(state);
 
+            if (!token) throw new Error("Токен отсутствует");
+
+            const decoded: { id: number } = jwtDecode(token);
+            const userId = decoded.id;
+
             if (!token) {
                 throw new Error("Ошибка: отсутствует токен авторизации");
             }
 
-            const response = await fetch("http://localhost:4200/api/task", {
+            const response = await fetch(`http://localhost:4200/api/task/user/${userId}'`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -95,7 +101,10 @@ export const assignUserToTask = createAsyncThunk<Task, { taskId: number; userId:
               throw new Error("Ошибка: отсутствует токен авторизации");
           }
 
-          const response = await fetch(`http://localhost:4200/api/task/${taskId}/assign/${userId}`, {
+          const decoded: { id: number } = jwtDecode(token);
+          const createUserId = decoded.id;
+
+          const response = await fetch(`http://localhost:4200/api/task/${taskId}/assign/${userId}/user/${createUserId}`, {
               method: "PATCH",
               headers: {
                   "Content-Type": "application/json",
@@ -127,6 +136,9 @@ export const updateTask = createAsyncThunk<Task, Task | CreateTask>(
           if (!token) {
               throw new Error("Ошибка: отсутствует токен авторизации");
           }
+
+          const decoded: { id: number } = jwtDecode(token);
+          const createUserId = decoded.id;
 
           let taskId: number | undefined;
           let assignmentDate: string | undefined;
@@ -174,7 +186,7 @@ export const updateTask = createAsyncThunk<Task, Task | CreateTask>(
               payload.reportIds = taskData.reports.map(r => r.reportId);
           }
 
-          const response = await fetch(`http://localhost:4200/api/task/${taskId}`, {
+          const response = await fetch(`http://localhost:4200/api/task/${taskId}/user/${createUserId}`, {
               method: "PATCH",
               headers: {
                   "Content-Type": "application/json",

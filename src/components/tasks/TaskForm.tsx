@@ -8,17 +8,18 @@ import {
     FormControl,
     InputLabel,
     Grid,
-    SelectChangeEvent,
-} from "@mui/material";
+    SelectChangeEvent, Typography
+} from '@mui/material'
 import { useDispatch, useSelector } from 'react-redux'
 import { AppDispatch, RootState } from '../../store'
 import { CreateTask, History, ReportTask, Task, User } from '../../types'
 import { fetchAllDepartments } from '../../store/departmentSlice'
 import { fetchProjectUsers } from '../../store/projectSlice'
+import { fetchTaskHistory } from '../../store/historySlice'
 
 interface TaskFormProps {
-    initialTask?: CreateTask;
-    onSave: (task: CreateTask) => void;
+    initialTask?: Partial<CreateTask> & { taskId?: number };
+    onSave: (task: Partial<CreateTask> & { taskId?: number }) => void;
     onCancel: () => void;
     projectId: number;
 }
@@ -26,28 +27,25 @@ interface TaskFormProps {
 const TaskForm: React.FC<TaskFormProps> = ({ projectId, initialTask, onSave, onCancel }) =>  {
     const dispatch = useDispatch<AppDispatch>();
 
-    const users = useSelector((state: RootState) => state.projects.users); // предполагаем, что есть slice users
+    const users = useSelector((state: RootState) => state.projects.users);
     const departments = useSelector((state: RootState) => state.department.departments);
 
-    const [task, setTask] = useState<Omit<CreateTask, "taskId">>(
-        initialTask || {
-            name: "",
-            description: "",
-            status: "planned",
-            priority: "normal",
-            projectId,
-            assignmentDate: new Date().toISOString().slice(0, 10),
-            dueDate: "",
-            estimatedHours: 0,
-            hoursSpent: 0,
-            userId: undefined,
-            departmentId: undefined,
-            // user: undefined,
-            // history: [],
-            // reports: [],
-        }
+    const [task, setTask] = useState<Partial<CreateTask> & { taskId?: number }>(
+      initialTask || {
+          name: "",
+          description: "",
+          status: "planned",
+          priority: "normal",
+          projectId,
+          assignmentDate: new Date().toISOString().slice(0, 10),
+          dueDate: "",
+          estimatedHours: 0,
+          hoursSpent: 0,
+          userId: undefined,
+          departmentId: undefined,
+      }
     );
-
+    const [newHours, setNewHours] = useState<number>(0);
     const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
     useEffect(() => {
@@ -93,11 +91,24 @@ const TaskForm: React.FC<TaskFormProps> = ({ projectId, initialTask, onSave, onC
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (validateForm()) {
-            onSave(task);
+            onSave(task);  // сохраняем задачу
+            // Дополнительно обновляем историю:
+            if (task.taskId) {
+                dispatch(fetchTaskHistory(task.taskId));  // перезагружаем историю
+            }
         }
     };
 
+    const handleAddHours = () => {
+        setTask((prev) => ({
+            ...prev,
+            hoursSpent: (prev.hoursSpent || 0) + newHours,
+        }));
+        setNewHours(0);
+    };
+
     return (
+      <>
         <Box
             component="form"
             onSubmit={handleSubmit}
@@ -108,6 +119,9 @@ const TaskForm: React.FC<TaskFormProps> = ({ projectId, initialTask, onSave, onC
                 mt: 4,
             }}
         >
+            <Typography mb={2} textAlign="center" variant="h6">
+                {initialTask ? "Редактирование задачи" : "Создание задачи"}
+            </Typography>
 
             <Grid container spacing={2}>
                 <Grid item xs={12}>
@@ -199,17 +213,30 @@ const TaskForm: React.FC<TaskFormProps> = ({ projectId, initialTask, onSave, onC
                     />
                 </Grid>
 
-                <Grid item xs={12} sm={6}>
+                {task.taskId && (
+                <Grid item xs={12} sm={6} display="flex" alignItems="center">
                     <TextField
-                        fullWidth
-                        label="Потрачено часов"
-                        name="hoursSpent"
-                        type="number"
-                        value={task.hoursSpent || ""}
-                        onChange={handleInputChange}
-                        inputProps={{ min: 0 }}
+                      fullWidth
+                      label="Потрачено часов"
+                      name="hoursSpent"
+                      type="number"
+                      value={task.hoursSpent || ""}
+                      InputProps={{ readOnly: true }}
                     />
-                </Grid>
+                    <TextField
+                      fullWidth
+                      label="Добавить часы"
+                      type="number"
+                      value={newHours}
+                      onChange={(e) => setNewHours(Number(e.target.value))}
+                      inputProps={{ min: 0 }}
+                      sx={{ ml: 2 }}
+                    />
+                    <Button  size="small"  onClick={handleAddHours} variant="outlined" sx={{ ml: 2 }}>
+                        ➕
+                    </Button>
+                </Grid>)}
+
 
                 <Grid item xs={12} sm={6}>
                     <FormControl fullWidth>
@@ -247,18 +274,17 @@ const TaskForm: React.FC<TaskFormProps> = ({ projectId, initialTask, onSave, onC
                     </FormControl>
                 </Grid>
 
-                <Grid item xs={12}>
-                    <Box sx={{ display: "flex", justifyContent: "space-between", mt: 2 }}>
-                        <Button variant="contained" color="primary" type="submit">
-                            Сохранить
-                        </Button>
-                        <Button variant="outlined" color="secondary" onClick={onCancel}>
-                            Отмена
-                        </Button>
-                    </Box>
+                <Grid item xs={12} display="flex" justifyContent="flex-end" gap={2} mt={2}>
+                    <Button variant="contained" color="primary" type="submit">
+                        Сохранить
+                    </Button>
+                    <Button variant="outlined" color="secondary" onClick={onCancel}>
+                        Закрыть
+                    </Button>
                 </Grid>
             </Grid>
         </Box>
+      </>
     );
 };
 
