@@ -7,6 +7,8 @@ import timeZoneReducer from "./timeZoneSlice";
 import departmentReducer from "./departmentSlice";
 import roleReducer from "./roleSlice";
 import historyReducer from "./historySlice";
+import reportProjectReducer from './reportProjectSlice'
+// import reportTaskReducer from './reportTaskSlice';
 
 export const index = configureStore({
     reducer: {
@@ -18,6 +20,8 @@ export const index = configureStore({
         department: departmentReducer,
         role: roleReducer,
         history: historyReducer,
+        reportProject: reportProjectReducer,
+        // reportTask: reportTaskReducer,
     },
 });
 

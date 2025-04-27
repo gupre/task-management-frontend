@@ -1,7 +1,16 @@
 import React from "react";
 import { AppBar, Box, CssBaseline, Drawer, Toolbar, Typography, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Button, IconButton } from "@mui/material";
-import { AdminPanelSettings, Assignment, Work, Person, Business } from '@mui/icons-material';
-import { Link, useNavigate } from "react-router-dom";
+import {
+  AdminPanelSettings,
+  Assignment,
+  Work,
+  Person,
+  Business,
+  Assessment,
+  Group,
+  Apartment, AccessTime
+} from '@mui/icons-material'
+import { Link, useNavigate } from 'react-router-dom'
 import { useLocation } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { logout } from "../../store/authSlice";
@@ -11,9 +20,10 @@ const drawerWidth = 240;
 const menuItems = [
   { text: "Проекты", icon: <Work />, path: "/projects" },
   { text: "Доска задач", icon: <Assignment />, path: "/" },
-  { text: "Управление пользователями", icon: <AdminPanelSettings />, path: "/admin/users" },
-  { text: "Управление департаментами", icon: <Business />, path: "/admin/departments" },
-  { text: "Управление часовыми поясами", icon: <Business />, path: "/admin/time-zones" },
+  { text: "Отчёты по проекту", icon: <Assessment />, path: "/reports/project/:projectId" },
+  { text: "Управление пользователями", icon: <Group />, path: "/admin/users" },
+  { text: "Управление департаментами", icon: <Apartment />, path: "/admin/departments" },
+  { text: "Управление часовыми поясами", icon: <AccessTime />, path: "/admin/time-zones" },
 ];
 
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -22,8 +32,8 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    dispatch(logout()); // Выход
-    navigate("/login"); // Редирект на страницу логина
+    dispatch(logout());
+    navigate("/login");
   };
 
   return (

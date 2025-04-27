@@ -1,7 +1,8 @@
 import React from "react";
 import { Task } from "../../types";
-import { Card, CardContent, Typography, IconButton, Box, Chip } from '@mui/material';
+import { Card, CardContent, Typography, IconButton, Box, Button } from '@mui/material'
 import { Edit, Delete, AccessTime, Person } from "@mui/icons-material";
+import { useNavigate } from 'react-router-dom'
 
 interface TaskCardProps {
   task: Task;
@@ -33,10 +34,16 @@ export const formatDate = (dateStr?: string): string => {
   return `${day}.${month}.${year}`;
 };
 
+
 export const TaskCard: React.FC<TaskCardProps> = ({ task, onEdit, onDelete }) => {
   const handleDelete = () => {
     const id = task.taskId;
     onDelete(id);
+  };
+
+  const navigate = useNavigate();
+  const handleOpenReport = () => {
+    navigate(`/reports/task/${task.taskId}`);
   };
 
   return (
@@ -101,6 +108,14 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onEdit, onDelete }) =>
           gap: 1,
         }}
       >
+        <Button
+          size="small"
+          variant="contained"
+          onClick={handleOpenReport}
+          sx={{ borderRadius: 2 }}
+        >
+          Отчёт
+        </Button>
         <IconButton onClick={() => onEdit(task)} color="primary" size="small">
           <Edit />
         </IconButton>

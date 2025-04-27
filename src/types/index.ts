@@ -17,24 +17,23 @@ export interface CreateTask {
 }
 
 export interface Task {
-        taskId?: number;
-        name: string;
-        description: string;
-        status: "planned" | "progress" | "end";
-        priority: "urgently" | "high" | "normal" | "low";
-        assignmentDate?: string;
-        hoursSpent?: number;
-        dueDate?: string;
-        estimatedHours?: number;
-        projectId: number;
-        userId?: number;
-        departmentId?: number;
-        // project: Project;
-        user?: User;
-        // department?: Department;
-        history: History[];
-        reports: ReportTask[];
-
+    taskId?: number;
+    name: string;
+    description: string;
+    status: "planned" | "progress" | "end";
+    priority: "urgently" | "high" | "normal" | "low";
+    assignmentDate?: string;
+    hoursSpent?: number;
+    dueDate?: string;
+    estimatedHours?: number;
+    projectId: number;
+    userId?: number;
+    departmentId?: number;
+    // project: Project;
+    user?: User;
+    // department?: Department;
+    history: History[];
+    // reports: ReportTask[];
 }
 
 
@@ -119,20 +118,10 @@ export interface History {
     createdByDepartment?: Department;
 }
 
-// Interface for ReportTask model (task-specific report)
-export interface ReportTask {
-    reportId: number;
-    taskId: number;
-    task: Task;
-    reportProjectId: number;
-    reportProject: ReportProject;
-    generatedDate: string;
-    content?: string;
-    performanceAnalysis?: string;
-}
-
 // Interface for ReportProject model (project-specific report)
 export interface ReportProject {
+    title?: string;
+    type?: string;
     reportId: number;
     projectId: number;
     project: Project;
@@ -144,8 +133,48 @@ export interface ReportProject {
     completionRate?: string;
     teamEfficiency?: string;
     totalTasks?: number;
-    reports: ReportTask[];
+    // reports: ReportTask[];
 }
+
+export interface CreateReportProject {
+    projectId: number;
+    title?: string;
+    type?: string;
+    generatedDate?: string;
+    content?: string;
+    performanceAnalysis?: string;
+    completedTasks?: number;
+    averageTimePerTask?: number;
+    completionRate?: string;
+    teamEfficiency?: string;
+    totalTasks?: number;
+    reports?: number[]; // id отчетов задач
+}
+
+
+// Interface for ReportTask model (task-specific report)
+// export interface ReportTask {
+//     reportId: number;
+//     taskId: number;
+//     title?: string;
+//     type?: string;
+//     task: Task;
+//     reportProjectId: number;
+//     reportProject: ReportProject;
+//     generatedDate: string;
+//     content?: string;
+//     performanceAnalysis?: string;
+// }
+//
+// export interface CreateReportTask {
+//     taskId: number;
+//     title?: string;
+//     type?: string;
+//     reportProjectId: number;
+//     generatedDate?: string;
+//     content?: string;
+//     performanceAnalysis?: string;
+// }
 
 // Interface for RolePermissions model
 // export interface RolePermissions {

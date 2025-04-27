@@ -12,7 +12,7 @@ import {
 } from '@mui/material'
 import { useDispatch, useSelector } from 'react-redux'
 import { AppDispatch, RootState } from '../../store'
-import { CreateTask, History, ReportTask, Task, User } from '../../types'
+import { CreateTask } from '../../types'
 import { fetchAllDepartments } from '../../store/departmentSlice'
 import { fetchProjectUsers } from '../../store/projectSlice'
 import { fetchTaskHistory } from '../../store/historySlice'

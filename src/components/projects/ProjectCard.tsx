@@ -9,6 +9,7 @@ import {
 } from "@mui/material";
 import { Project } from "../../types";
 import { formatDate } from '../tasks/TaskCard'
+import { useNavigate } from 'react-router-dom'
 
 interface ProjectCardProps {
   project: Project;
@@ -23,6 +24,13 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
                                                    onDelete,
                                                    onManageUsers,
                                                  }) => {
+
+  const navigate = useNavigate();
+
+  const handleOpenReport = () => {
+    navigate(`/reports/project/${project.projectId}`);
+  };
+
   return (
     <Card
       sx={{
@@ -80,6 +88,14 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
           sx={{ borderRadius: 2 }}
         >
           Участники
+        </Button>
+        <Button
+          size="small"
+          variant="contained"
+          onClick={handleOpenReport}
+          sx={{ borderRadius: 2 }}
+        >
+          Отчёт
         </Button>
         <Box>
           <Button

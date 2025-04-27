@@ -10,6 +10,8 @@ import ProjectBoard from "./pages/ProjectBoard";
 import AdminUserManagement from './pages/AdminUserManagement'
 import DepartmentBoard from './pages/DepartmentBoard'
 import TimeZonesBoard from './pages/TimeZonesBoard'
+import ReportProjectList from './pages/ReportProjectList'
+import ReportProjectDetail from './components/reports/ReportProjectDetail'
 
 function App() {
   return (
@@ -24,6 +26,8 @@ function App() {
                   <Route path="/admin/users" element={<Layout><AdminUserManagement /></Layout>} />
                   <Route path="/admin/departments" element={<Layout><DepartmentBoard /></Layout>} />
                   <Route path="/admin/time-zones" element={<Layout><TimeZonesBoard /></Layout>} />
+                  <Route path="/reports/project/:projectId" element={<Layout><ReportProjectList /></Layout>} />
+                  <Route path="/project/:projectId/report/:reportId" element={<Layout><ReportProjectDetail /></Layout>} />
               </Route>
           </Routes>
       </Router>
