@@ -1,14 +1,14 @@
 import React, { useEffect, useState, useCallback } from "react";
 import {
-    Box,
-    Typography,
-    Button,
-    Modal,
-    Paper,
-    Grid,
-    Stack,
-    Fade,
-} from "@mui/material";
+  Box,
+  Typography,
+  Button,
+  Modal,
+  Paper,
+  Grid,
+  Stack,
+  Fade, TextField, InputAdornment
+} from '@mui/material'
 import { useDispatch, useSelector } from "react-redux";
 import { RootState, AppDispatch } from "../store";
 import {
@@ -24,6 +24,7 @@ import ProjectForm from "../components/projects/ProjectForm";
 import { Project } from "../types";
 import AddUserToProject from "../components/projects/AddUserToProject";
 import ProjectUsers from "../components/projects/ProjectUsers";
+import SearchIcon from '@mui/icons-material/Search'
 
 const ProjectBoard: React.FC = () => {
     const dispatch = useDispatch<AppDispatch>();
@@ -31,43 +32,47 @@ const ProjectBoard: React.FC = () => {
     const [openForm, setOpenForm] = useState(false);
     const [editingProject, setEditingProject] = useState<Project | null>(null);
     const [openUsersProjectId, setOpenUsersProjectId] = useState<number | null>(null);
+    const [searchQuery, setSearchQuery] = useState<string>("");
+
 
     useEffect(() => {
-        dispatch(fetchProjects());
-        dispatch(fetchMyProjects());
-    }, [dispatch]);
+          dispatch(fetchProjects());
+          dispatch(fetchMyProjects());
+      }, [dispatch]);
 
-    const handleOpenForm = useCallback((project?: Project) => {
-        setEditingProject(project || null);
-        setOpenForm(true);
-    }, []);
+      const handleOpenForm = useCallback((project?: Project) => {
+          setEditingProject(project || null);
+          setOpenForm(true);
+      }, []);
 
-    const handleCloseForm = useCallback(() => {
-        setOpenForm(false);
-        setEditingProject(null);
-    }, []);
+      const handleCloseForm = useCallback(() => {
+          setOpenForm(false);
+          setEditingProject(null);
+      }, []);
 
-  const handleSaveProject = useCallback(
-    (projectIdOrProject: number | Partial<Project>, changedFields?: Partial<Project>) => {
-      if (typeof projectIdOrProject === "number") {
-        // Редактирование существующего проекта по id
-        if (changedFields) {
-          dispatch(updateProject({ ...changedFields, projectId: projectIdOrProject } as Project));
+    const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+      setSearchQuery(event.target.value);
+    };
+
+    const handleSaveProject = useCallback(
+      (projectIdOrProject: number | Partial<Project>, changedFields?: Partial<Project>) => {
+        if (typeof projectIdOrProject === "number") {
+          // Редактирование существующего проекта по id
+          if (changedFields) {
+            dispatch(updateProject({ ...changedFields, projectId: projectIdOrProject } as Project));
+          }
+        } else {
+          // Создание нового проекта
+          dispatch(createProject(projectIdOrProject as Project));
         }
-      } else {
-        // Создание нового проекта
-        dispatch(createProject(projectIdOrProject as Project));
-      }
-      handleCloseForm();
-    },
-    [dispatch, handleCloseForm]
-  );
+        handleCloseForm();
+      },
+      [dispatch, handleCloseForm]
+    );
 
-
-
-  const handleOpenUsers = useCallback((projectId?: number) => {
-        if (!projectId) return;
-        setOpenUsersProjectId(projectId);
+    const handleOpenUsers = useCallback((projectId?: number) => {
+          if (!projectId) return;
+          setOpenUsersProjectId(projectId);
     }, []);
 
     const handleCloseUsers = useCallback(() => {
@@ -80,30 +85,54 @@ const ProjectBoard: React.FC = () => {
               <Typography variant="h4" fontWeight={600}>
                   Управление проектами
               </Typography>
-              <Button
-                variant="contained"
-                color="primary"
-                onClick={() => handleOpenForm()}
-                sx={{ borderRadius: 2, textTransform: "none", px: 3 }}
-              >
-                  Новый проект
-              </Button>
           </Stack>
 
-          <Grid container spacing={2}>
-              {projects.map((project) => (
-                <Grid item key={project.projectId} xs={12} sm={6} md={4}>
-                    <ProjectCard
-                      project={project}
-                      onEdit={() => handleOpenForm(project)}
-                      onDelete={() => dispatch(deleteProject(project.projectId))}
-                      onManageUsers={() => handleOpenUsers(project.projectId)}
-                    />
-                </Grid>
-              ))}
-          </Grid>
+        <Stack direction="row" spacing={2} mb={3}>
+          <TextField
+            type="text"
+            placeholder="Поиск"
+            value={searchQuery}
+            variant="outlined"
+            size="small"
+            onChange={handleSearchChange}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon />
+                </InputAdornment>
+              ),
+            }}
+            sx={{ width: "300px" }}
+          />
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={() => handleOpenForm()}
+            sx={{ ml: 2, borderRadius: 2, textTransform: "none", px: 3 }}
+          >
+            Создать проект
+          </Button>
+        </Stack>
 
-          <Modal open={!!openUsersProjectId} onClose={handleCloseUsers} closeAfterTransition>
+        <Grid container spacing={2}>
+          {projects
+            .filter((project) =>
+              project.name.toLowerCase().includes(searchQuery.toLowerCase())
+            )
+            .map((project) => (
+              <Grid item key={project.projectId} xs={12} sm={6} md={4}>
+                <ProjectCard
+                  project={project}
+                  onEdit={() => handleOpenForm(project)}
+                  onDelete={() => dispatch(deleteProject(project.projectId))}
+                  onManageUsers={() => handleOpenUsers(project.projectId)}
+                />
+              </Grid>
+            ))}
+        </Grid>
+
+
+        <Modal open={!!openUsersProjectId} onClose={handleCloseUsers} closeAfterTransition>
               <Fade in={!!openUsersProjectId}>
                   <Paper
                     sx={{

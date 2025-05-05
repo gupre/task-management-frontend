@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import {
 	Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-	Paper, Select, MenuItem, Checkbox, Typography, Button, TextField, InputAdornment, IconButton, Pagination
+	Paper, Select, MenuItem, Checkbox, Typography, Button, TextField, InputAdornment, Pagination
 } from "@mui/material";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "../store";

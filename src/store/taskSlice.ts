@@ -1,4 +1,4 @@
-import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { CreateTask, Task } from '../types'
 import { RootState } from "./index";
 import { getToken } from "../utils/auth";
@@ -165,6 +165,17 @@ export const updateTask = createAsyncThunk<Task, Task | CreateTask>(
           // Убираем лишнее
           if ('project' in payload) {
               delete payload.project;
+          }
+
+          if ('user' in payload) {
+              delete payload.user;
+          }
+
+          if ('reports' in payload) {
+              delete payload.reports;
+          }
+          if ('history' in payload) {
+              delete payload.history;
           }
 
           if (

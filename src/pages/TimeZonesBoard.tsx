@@ -10,6 +10,7 @@ import { fetchTimezones, createTimezone, updateTimezone, deleteTimezone } from '
 import { Timezone } from "../types";
 import SearchIcon from '@mui/icons-material/Search';
 import CloseIcon from '@mui/icons-material/Close'
+import { Delete, Edit } from '@mui/icons-material'
 
 const TimezonesPage = () => {
 	const dispatch = useDispatch<AppDispatch>();
@@ -120,7 +121,7 @@ const TimezonesPage = () => {
 
 	return (
 		<Box sx={{ p: 3 }}>
-			<Typography variant="h6" gutterBottom>
+			<Typography mb={3}  variant="h4" fontWeight={600} gutterBottom>
 				Управление часовыми поясами
 			</Typography>
 
@@ -145,7 +146,7 @@ const TimezonesPage = () => {
 				<Button
 					variant="contained"
 					color="primary"
-					sx={{ ml: 2 }}
+					sx={{ ml: 2, borderRadius: 2, textTransform: "none", px: 3 }}
 					onClick={() => setOpenCreateModal(true)}
 				>
 					Создать часовой пояс
@@ -167,22 +168,13 @@ const TimezonesPage = () => {
 								}}
 							>
 								<Typography variant="h6">{timezone.name}</Typography>
-								<Box sx={{ mt: 1 }}>
-									<Button
-										variant="outlined"
-										color="primary"
-										onClick={() => handleEditTimezone(timezone)}
-									>
-										Редактировать
-									</Button>
-									<Button
-										variant="outlined"
-										color="error"
-										sx={{ ml: 2 }}
-										onClick={() => handleDeleteClick(timezone)}
-									>
-										Удалить
-									</Button>
+								<Box sx={{ mt: 1, display: "flex", justifyContent: "flex-end", gap: 1 }}>
+									<IconButton onClick={() => handleEditTimezone(timezone)} color="primary" size="small">
+										<Edit />
+									</IconButton>
+									<IconButton onClick={() => handleDeleteClick(timezone)} color="error" size="small">
+										<Delete />
+									</IconButton>
 								</Box>
 							</Paper>
 						</Grid>

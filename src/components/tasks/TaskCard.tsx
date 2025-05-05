@@ -1,8 +1,7 @@
 import React from "react";
 import { Task } from "../../types";
-import { Card, CardContent, Typography, IconButton, Box, Button } from '@mui/material'
-import { Edit, Delete, AccessTime, Person } from "@mui/icons-material";
-import { useNavigate } from 'react-router-dom'
+import { Card, CardContent, Typography, IconButton, Box } from '@mui/material'
+import { Edit, Delete, AccessTime, Person, WarningAmber } from '@mui/icons-material'
 
 interface TaskCardProps {
   task: Task;
@@ -41,10 +40,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onEdit, onDelete }) =>
     onDelete(id);
   };
 
-  const navigate = useNavigate();
-  const handleOpenReport = () => {
-    navigate(`/reports/task/${task.taskId}`);
-  };
+  const isOverdue = task.dueDate ? new Date(task.dueDate) < new Date() : false;
 
   return (
     <Card
@@ -54,19 +50,29 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onEdit, onDelete }) =>
         border: "1px solid",
         borderColor: getBorderColor(task.priority),
         position: "relative",
-        minHeight: 120, // уменьшена высота
+        minHeight: 120,
         borderRadius: 1,
-        boxShadow: 2, // добавлена тень
-        transition: "all 0.3s ease", // плавные анимации
+        boxShadow: 2,
+        transition: "all 0.3s ease",
         "&:hover": {
-          boxShadow: 5, // при наведении на карточку эффект увеличенной тени
+          boxShadow: 5,
         }
       }}
     >
       <CardContent sx={{ paddingBottom: "36px" }}>
-        <Typography variant="body1" sx={{ fontWeight: "bold", fontSize: 14 }}>
-          {task.name}
-        </Typography>
+        <Box display="flex" alignItems="center" gap={1}>
+          <Typography variant="body1" sx={{ fontWeight: "bold", fontSize: 14 }}>
+            {task.name}
+          </Typography>
+          {isOverdue && task.status !== "end" &&(
+            <Box display="flex" alignItems="center" gap={0.5}>
+              <WarningAmber fontSize="small" color="error" />
+              <Typography variant="caption" color="error" fontWeight="bold">
+                Просрочено
+              </Typography>
+            </Box>
+          )}
+        </Box>
 
         {(task.assignmentDate || task.dueDate) && (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5 }}>
@@ -108,14 +114,6 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onEdit, onDelete }) =>
           gap: 1,
         }}
       >
-        <Button
-          size="small"
-          variant="contained"
-          onClick={handleOpenReport}
-          sx={{ borderRadius: 2 }}
-        >
-          Отчёт
-        </Button>
         <IconButton onClick={() => onEdit(task)} color="primary" size="small">
           <Edit />
         </IconButton>

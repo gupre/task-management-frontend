@@ -1,6 +1,6 @@
 import React from "react";
 import AuthForm from "../components/auth/AuthForm";
-import {Button} from "@mui/material";
+import { AppBar, Box, Button, Toolbar, Typography } from '@mui/material'
 import {useNavigate} from "react-router-dom";
 
 const Register: React.FC = () => {
@@ -28,17 +28,42 @@ const Register: React.FC = () => {
         navigate("/login");
     };
 
-    return (<>
-        <AuthForm isLogin={false} onSubmit={handleRegister} />
-        <Button
-            fullWidth
-            variant="outlined"
-            sx={{ mt: 2 }}
-            onClick={navigateToLogin}
-        >
-            Есть аккаунт? Войти
-        </Button>
-    </>);
+    return (
+      <>
+          <AppBar position="fixed" sx={{ width: "100%" }}>
+              <Toolbar sx={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
+                  <Typography
+                    variant="h6"
+                    noWrap
+                    component="div"
+                    sx={{ position: "absolute", left: "50%", transform: "translateX(-50%)" }}
+                  >
+                      Task Manager
+                  </Typography>
+              </Toolbar>
+          </AppBar>
+
+          <Box
+            display="flex"
+            flexDirection="column"
+            justifyContent="center"
+            alignItems="center"
+            px={2}
+            pt={10}
+          >
+              <AuthForm isLogin={false} onSubmit={handleRegister} />
+              <Box display="flex" justifyContent="center" mt={2}>
+                  <Button
+                    variant="outlined"
+                    sx={{ mt: 2 }}
+                    onClick={navigateToLogin}
+                  >
+                      Есть аккаунт? Войти
+                  </Button>
+              </Box>
+          </Box>
+      </>
+    );
 };
 
 export default Register;

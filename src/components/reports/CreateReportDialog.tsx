@@ -15,6 +15,8 @@ const reportTypes = [
 	{ value: "general", label: "Общий" },
 	{ value: "tasks", label: "По задачам" },
 	{ value: "efficiency", label: "По эффективности команды" },
+	{ value: "workload", label: "По нагрузке" },
+	{ value: "team-member", label: "По участникам" },
 ];
 
 const CreateReportDialog: React.FC<CreateReportDialogProps> = ({

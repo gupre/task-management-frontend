@@ -2,8 +2,9 @@ import React from "react";
 import AuthForm from "../components/auth/AuthForm";
 import { useDispatch } from "react-redux";
 import { login } from "../store/authSlice";
-import { useNavigate } from "react-router-dom";
-import { Button } from "@mui/material";
+import { Link, useNavigate } from 'react-router-dom'
+import { AppBar, Box, Button, IconButton, Toolbar, Typography } from '@mui/material'
+import { Person } from '@mui/icons-material'
 
 const Login: React.FC = () => {
     const dispatch = useDispatch();
@@ -43,17 +44,41 @@ const Login: React.FC = () => {
         navigate("/register");
     };
 
-    return (<>
-            <AuthForm isLogin={true} onSubmit={handleLogin} />
-            <Button
-                fullWidth
+    return (
+      <>
+        <AppBar position="fixed" sx={{ width: "100%" }}>
+            <Toolbar sx={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
+                <Typography
+                  variant="h6"
+                  noWrap
+                  component="div"
+                  sx={{ position: "absolute", left: "50%", transform: "translateX(-50%)" }}
+                >
+                    Task Manager
+                </Typography>
+            </Toolbar>
+        </AppBar>
+
+        <Box
+        display="flex"
+        flexDirection="column"
+        justifyContent="center"
+        alignItems="center"
+        px={2}
+        pt={20}
+        >
+          <AuthForm isLogin={true} onSubmit={handleLogin} />
+          <Box display="flex" justifyContent="center" mt={2}>
+              <Button
                 variant="outlined"
                 sx={{ mt: 2 }}
                 onClick={navigateToRegister}
-            >
-                Нет аккаунта? Зарегистрироваться
-            </Button>
-            </>);
+              >
+                  Нет аккаунта? Зарегистрироваться
+              </Button>
+          </Box>
+        </Box>
+    </>);
 };
 
 export default Login;

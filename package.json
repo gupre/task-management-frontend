@@ -21,10 +21,18 @@
     "@types/node": "^16.18.126",
     "@types/react": "^19.0.10",
     "@types/react-dom": "^19.0.4",
+    "@wamra/gantt-task-react": "^0.6.17",
+    "chart.js": "^4.4.9",
+    "date-fns": "^4.1.0",
     "dayjs": "^1.11.13",
+    "dhtmlx-gantt": "^9.0.10",
     "formik": "^2.4.6",
+    "frappe-gantt": "^1.0.3",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^3.0.1",
     "jwt-decode": "^4.0.0",
     "react": "^19.0.0",
+    "react-chartjs-2": "^5.3.0",
     "react-dom": "^19.0.0",
     "react-redux": "^9.2.0",
     "react-router-dom": "^7.2.0",
@@ -56,5 +64,8 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "@types/frappe-gantt": "^0.9.0"
   }
 }

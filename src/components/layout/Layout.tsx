@@ -1,12 +1,9 @@
 import React from "react";
 import { AppBar, Box, CssBaseline, Drawer, Toolbar, Typography, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Button, IconButton } from "@mui/material";
 import {
-  AdminPanelSettings,
   Assignment,
   Work,
   Person,
-  Business,
-  Assessment,
   Group,
   Apartment, AccessTime
 } from '@mui/icons-material'
@@ -20,7 +17,6 @@ const drawerWidth = 240;
 const menuItems = [
   { text: "Проекты", icon: <Work />, path: "/projects" },
   { text: "Доска задач", icon: <Assignment />, path: "/" },
-  { text: "Отчёты по проекту", icon: <Assessment />, path: "/reports/project/:projectId" },
   { text: "Управление пользователями", icon: <Group />, path: "/admin/users" },
   { text: "Управление департаментами", icon: <Apartment />, path: "/admin/departments" },
   { text: "Управление часовыми поясами", icon: <AccessTime />, path: "/admin/time-zones" },

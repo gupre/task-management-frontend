@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import React from 'react'
 import {
   Button,
   Card,
@@ -8,7 +8,7 @@ import {
   Avatar, Box
 } from '@mui/material'
 import { useDispatch } from "react-redux";
-import { fetchProjectUsers, removeUserFromProject } from '../../store/projectSlice'
+import { removeUserFromProject } from '../../store/projectSlice'
 import { AppDispatch } from "../../store";
 import PersonIcon from "@mui/icons-material/Person";
 

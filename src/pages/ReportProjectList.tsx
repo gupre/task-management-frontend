@@ -1,14 +1,28 @@
 import React, { useEffect, useState } from "react";
 import {
-	Button, Box, Typography, CircularProgress, Paper, List, ListItem, Divider,
-	TextField, Select, MenuItem, FormControl, InputLabel, IconButton, Dialog, DialogTitle, DialogContent, DialogActions
-} from '@mui/material';
+	Button,
+	Box,
+	Typography,
+	CircularProgress,
+	Paper,
+	List,
+	ListItem,
+	Divider,
+	TextField,
+	Select,
+	MenuItem,
+	FormControl,
+	InputLabel,
+	IconButton,
+	InputAdornment
+} from '@mui/material'
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useParams } from 'react-router-dom'
 import { fetchProjectReports, createProjectReport, updateProjectReport, deleteProjectReport } from "../store/reportProjectSlice";
 import { RootState, AppDispatch } from "../store";
 import CreateReportDialog from "../components/reports/CreateReportDialog";
 import { Edit, Delete } from '@mui/icons-material';
+import SearchIcon from '@mui/icons-material/Search'
 
 const ProjectReportPage: React.FC = () => {
 	const { projectId } = useParams<{ projectId: string }>();
@@ -27,10 +41,8 @@ const ProjectReportPage: React.FC = () => {
 	useEffect(() => {
 		if (projectId) {
 			dispatch(fetchProjectReports({ projectId: Number(projectId), startDate, endDate }));
-
 		}
-
-	}, [dispatch, projectId]);
+	}, [dispatch, projectId, startDate, endDate]);
 
 	const handleCreateReport = (title: string, type: string) => {
 		if (projectId && title) {
@@ -70,8 +82,6 @@ const ProjectReportPage: React.FC = () => {
 
 	const filteredReports = projectReports.filter(r => r.projectId === Number(projectId));
 
-	console.log(filteredReports)
-
 	const filteredByDateReports = filteredReports.filter(report => {
 		const reportDate = new Date(report.generatedDate);
 		const start = startDate ? new Date(startDate) : new Date(0); // Если не задана дата начала, используем 1970 год
@@ -86,6 +96,8 @@ const ProjectReportPage: React.FC = () => {
 		(filterType ? report.type === filterType : true)
 	);
 
+	const sortedReports = searchedReports.sort((a, b) => new Date(b.generatedDate).getTime() - new Date(a.generatedDate).getTime());
+
 	return (
 		<Box p={4}>
 			<Typography variant="h4" sx={{ mr: 2, mb: 4, flexShrink: 0 }}>
@@ -97,10 +109,17 @@ const ProjectReportPage: React.FC = () => {
 				<Box display="flex" gap={2} flexWrap="wrap" alignItems="center">
 					<TextField
 						size="small"
-						label="Поиск"
+						placeholder="Поиск"
 						variant="outlined"
 						value={searchTerm}
 						onChange={(e) => setSearchTerm(e.target.value)}
+						InputProps={{
+							startAdornment: (
+								<InputAdornment position="start">
+									<SearchIcon />
+								</InputAdornment>
+							),
+						}}
 					/>
 
 					<FormControl size="small" sx={{ minWidth: 150 }}>
@@ -115,6 +134,8 @@ const ProjectReportPage: React.FC = () => {
 							<MenuItem value="tasks">По задачам</MenuItem>
 							<MenuItem value="efficiency">По эффективности</MenuItem>
 							<MenuItem value="general">Общий</MenuItem>
+							<MenuItem value="workload">По нагрузке</MenuItem>
+							<MenuItem value="team-member">По участникам</MenuItem>
 						</Select>
 					</FormControl>
 
@@ -146,7 +167,7 @@ const ProjectReportPage: React.FC = () => {
 				<Typography>Нет отчётов для этого проекта.</Typography>
 			) : (
 				<List>
-					{searchedReports.map((report) => (
+					{sortedReports.map((report) => (
 						<Paper key={report.reportId} sx={{ mb: 2, p: 2 }}>
 							<ListItem alignItems="flex-start" disableGutters>
 								<Box width="100%">
@@ -165,7 +186,19 @@ const ProjectReportPage: React.FC = () => {
 									</Box>
 
 									<Typography variant="body2" color="text.secondary">
-										Тип: {report.type === "tasks" ? "По задачам" : report.type === "efficiency" ? "По эффективности" : "Общий"}
+										Тип: {
+										report.type === "tasks"
+											? "По задачам"
+											: report.type === "efficiency"
+												? "По эффективности"
+												: report.type === "general"
+													? "Общий"
+													: report.type === "workload"
+														? "По нагрузке"
+														: report.type === "team-member"
+															? "По участникам"
+															: report.type
+									}
 									</Typography>
 
 									<Divider sx={{ my: 1 }} />

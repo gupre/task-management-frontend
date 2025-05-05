@@ -93,7 +93,7 @@ const TaskHistory: React.FC<TaskHistoryProps> = ({ taskId }) => {
 	return (
 		<Box display="flex" flexDirection="column" height="100%">
 			<Typography variant="h6" textAlign="center" mb={2}>История изменений</Typography>
-			<Box flexGrow={1} overflow="auto" maxHeight="475px" p={1} border={1} borderRadius={2}>
+			<Box flexGrow={1} overflow="auto" maxHeight="780px" p={1} border={1} borderRadius={2}>
 				{historys.length === 0 ? (
 					<Typography>Нет записей истории</Typography>
 				) : (

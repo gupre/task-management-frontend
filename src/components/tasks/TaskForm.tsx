@@ -8,8 +8,9 @@ import {
     FormControl,
     InputLabel,
     Grid,
-    SelectChangeEvent, Typography
+    SelectChangeEvent, Typography, LinearProgress
 } from '@mui/material'
+import AddIcon from '@mui/icons-material/Add';
 import { useDispatch, useSelector } from 'react-redux'
 import { AppDispatch, RootState } from '../../store'
 import { CreateTask } from '../../types'
@@ -24,7 +25,7 @@ interface TaskFormProps {
     projectId: number;
 }
 
-const TaskForm: React.FC<TaskFormProps> = ({ projectId, initialTask, onSave, onCancel }) =>  {
+const TaskForm: React.FC<TaskFormProps> = ({ projectId, initialTask, onSave, onCancel }) => {
     const dispatch = useDispatch<AppDispatch>();
 
     const users = useSelector((state: RootState) => state.projects.users);
@@ -43,6 +44,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ projectId, initialTask, onSave, onC
           hoursSpent: 0,
           userId: undefined,
           departmentId: undefined,
+          progress: 0,  // Прогресс выполнения
       }
     );
     const [newHours, setNewHours] = useState<number>(0);
@@ -57,17 +59,15 @@ const TaskForm: React.FC<TaskFormProps> = ({ projectId, initialTask, onSave, onC
         const { name, value, type } = e.target;
         let parsedValue = type === "number" ? Math.max(0, Number(value)) : value;
 
-        // Если значение - дата, преобразуем его в формат yyyy-mm-dd
         if (name === "assignmentDate" || name === "dueDate") {
             const date = new Date(parsedValue);
             if (!isNaN(date.getTime())) {
-                parsedValue = date.toISOString().split('T')[0]; // Формат yyyy-mm-dd
+                parsedValue = date.toISOString().split('T')[0];
             }
         }
 
         setTask((prev) => ({ ...prev, [name]: parsedValue }));
     };
-
 
     const handleSelectChange = (e: SelectChangeEvent) => {
         const { name, value } = e.target;
@@ -91,10 +91,9 @@ const TaskForm: React.FC<TaskFormProps> = ({ projectId, initialTask, onSave, onC
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (validateForm()) {
-            onSave(task);  // сохраняем задачу
-            // Дополнительно обновляем историю:
+            onSave(task);
             if (task.taskId) {
-                dispatch(fetchTaskHistory(task.taskId));  // перезагружаем историю
+                dispatch(fetchTaskHistory(task.taskId));
             }
         }
     };
@@ -107,9 +106,14 @@ const TaskForm: React.FC<TaskFormProps> = ({ projectId, initialTask, onSave, onC
         setNewHours(0);
     };
 
+    const handleProgressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const progress = Math.max(0, Math.min(100, Number(e.target.value))); // Ограничиваем диапазон от 0 до 100
+        setTask((prev) => ({ ...prev, progress }));
+    };
+
     return (
       <>
-        <Box
+          <Box
             component="form"
             onSubmit={handleSubmit}
             sx={{
@@ -118,65 +122,65 @@ const TaskForm: React.FC<TaskFormProps> = ({ projectId, initialTask, onSave, onC
                 mx: "auto",
                 mt: 4,
             }}
-        >
-            <Typography mb={2} textAlign="center" variant="h6">
-                {initialTask ? "Редактирование задачи" : "Создание задачи"}
-            </Typography>
+          >
+              <Typography mb={2} textAlign="center" variant="h6">
+                  {initialTask ? "Редактирование задачи" : "Создание задачи"}
+              </Typography>
 
-            <Grid container spacing={2}>
-                <Grid item xs={12}>
-                    <Grid container spacing={2}>
-                        <Grid item xs={12}>
-                            <TextField
-                              fullWidth
-                              label="Название"
-                              name="name"
-                              value={task.name}
-                              onChange={handleInputChange}
-                              required
-                              error={!!errors.name}
-                              helperText={errors.name}
-                            />
-                        </Grid>
-                        <Grid item xs={12}>
-                            <TextField
-                              fullWidth
-                              label="Описание"
-                              name="description"
-                              value={task.description}
-                              onChange={handleInputChange}
-                              multiline
-                              rows={3}
-                            />
-                        </Grid>
-                    </Grid>
-                </Grid>
+              <Grid container spacing={2}>
+                  <Grid item xs={12}>
+                      <Grid container spacing={2}>
+                          <Grid item xs={12}>
+                              <TextField
+                                fullWidth
+                                label="Название"
+                                name="name"
+                                value={task.name}
+                                onChange={handleInputChange}
+                                required
+                                error={!!errors.name}
+                                helperText={errors.name}
+                              />
+                          </Grid>
+                          <Grid item xs={12}>
+                              <TextField
+                                fullWidth
+                                label="Описание"
+                                name="description"
+                                value={task.description}
+                                onChange={handleInputChange}
+                                multiline
+                                rows={3}
+                              />
+                          </Grid>
+                      </Grid>
+                  </Grid>
 
-                <Grid item xs={12} sm={6}>
-                    <FormControl fullWidth>
-                        <InputLabel>Статус</InputLabel>
-                        <Select name="status" value={task.status} onChange={handleSelectChange}>
-                            <MenuItem value="planned">Запланировано</MenuItem>
-                            <MenuItem value="progress">В процессе</MenuItem>
-                            <MenuItem value="end">Завершено</MenuItem>
-                        </Select>
-                    </FormControl>
-                </Grid>
+                  <Grid item xs={12} sm={6}>
+                      <FormControl fullWidth>
+                          <InputLabel>Статус</InputLabel>
+                          <Select name="status" value={task.status} onChange={handleSelectChange}>
+                              <MenuItem value="planned">Запланировано</MenuItem>
+                              <MenuItem value="progress">В процессе</MenuItem>
+                              <MenuItem value="end">Завершено</MenuItem>
+                          </Select>
+                      </FormControl>
+                  </Grid>
 
-                <Grid item xs={12} sm={6}>
-                    <FormControl fullWidth>
-                        <InputLabel>Приоритет</InputLabel>
-                        <Select name="priority" value={task.priority} onChange={handleSelectChange}>
-                            <MenuItem value="urgently">Срочно</MenuItem>
-                            <MenuItem value="high">Высокий</MenuItem>
-                            <MenuItem value="normal">Средний</MenuItem>
-                            <MenuItem value="low">Низкий</MenuItem>
-                        </Select>
-                    </FormControl>
-                </Grid>
+                  <Grid item xs={12} sm={6}>
+                      <FormControl fullWidth>
+                          <InputLabel>Приоритет</InputLabel>
+                          <Select name="priority" value={task.priority} onChange={handleSelectChange}>
+                              <MenuItem value="urgently">Срочно</MenuItem>
+                              <MenuItem value="high">Высокий</MenuItem>
+                              <MenuItem value="normal">Средний</MenuItem>
+                              <MenuItem value="low">Низкий</MenuItem>
+                          </Select>
+                      </FormControl>
+                  </Grid>
 
-                <Grid item xs={12} sm={6}>
-                    <TextField
+                  <Grid item xs={12} sm={6}>
+                      <TextField
                         fullWidth
                         label="Дата назначения"
                         name="assignmentDate"
@@ -184,11 +188,11 @@ const TaskForm: React.FC<TaskFormProps> = ({ projectId, initialTask, onSave, onC
                         value={task.assignmentDate?.slice(0, 10) || ""}
                         onChange={handleInputChange}
                         InputLabelProps={{ shrink: true }}
-                    />
-                </Grid>
+                      />
+                  </Grid>
 
-                <Grid item xs={12} sm={6}>
-                    <TextField
+                  <Grid item xs={12} sm={6}>
+                      <TextField
                         fullWidth
                         label="Дедлайн*"
                         name="dueDate"
@@ -198,11 +202,47 @@ const TaskForm: React.FC<TaskFormProps> = ({ projectId, initialTask, onSave, onC
                         InputLabelProps={{ shrink: true }}
                         error={!!errors.dueDate}
                         helperText={errors.dueDate}
-                    />
-                </Grid>
+                      />
+                  </Grid>
 
-                <Grid item xs={12} sm={6}>
-                    <TextField
+                  <Grid item xs={12} sm={6}>
+                      <FormControl fullWidth>
+                          <InputLabel>Исполнитель</InputLabel>
+                          <Select
+                            name="userId"
+                            value={task.userId ? String(task.userId) : ""}
+                            onChange={handleSelectChange}
+                          >
+                              <MenuItem value="">Не назначено</MenuItem>
+                              {users.map((user) => (
+                                <MenuItem key={user.user.userId} value={user.user.userId}>
+                                    {user.user.name}
+                                </MenuItem>
+                              ))}
+                          </Select>
+                      </FormControl>
+                  </Grid>
+
+                  <Grid item xs={12} sm={6}>
+                      <FormControl fullWidth>
+                          <InputLabel>Департамент</InputLabel>
+                          <Select
+                            name="departmentId"
+                            value={task.departmentId ? String(task.departmentId) : ""}
+                            onChange={handleSelectChange}
+                          >
+                              <MenuItem value="">Не указано</MenuItem>
+                              {departments.map((dept) => (
+                                <MenuItem key={dept.departmentId} value={dept.departmentId}>
+                                    {dept.name}
+                                </MenuItem>
+                              ))}
+                          </Select>
+                      </FormControl>
+                  </Grid>
+
+                  <Grid item xs={12} sm={6}>
+                      <TextField
                         fullWidth
                         label="Оценка часов"
                         name="estimatedHours"
@@ -210,80 +250,97 @@ const TaskForm: React.FC<TaskFormProps> = ({ projectId, initialTask, onSave, onC
                         value={task.estimatedHours || ""}
                         onChange={handleInputChange}
                         inputProps={{ min: 0 }}
-                    />
-                </Grid>
+                      />
+                  </Grid>
 
-                {task.taskId && (
-                <Grid item xs={12} sm={6} display="flex" alignItems="center">
-                    <TextField
-                      fullWidth
-                      label="Потрачено часов"
-                      name="hoursSpent"
-                      type="number"
-                      value={task.hoursSpent || ""}
-                      InputProps={{ readOnly: true }}
-                    />
-                    <TextField
-                      fullWidth
-                      label="Добавить часы"
-                      type="number"
-                      value={newHours}
-                      onChange={(e) => setNewHours(Number(e.target.value))}
-                      inputProps={{ min: 0 }}
-                      sx={{ ml: 2 }}
-                    />
-                    <Button  size="small"  onClick={handleAddHours} variant="outlined" sx={{ ml: 2 }}>
-                        ➕
-                    </Button>
-                </Grid>)}
-
-
-                <Grid item xs={12} sm={6}>
-                    <FormControl fullWidth>
-                        <InputLabel>Исполнитель</InputLabel>
-                        <Select
-                            name="userId"
-                            value={task.userId ? String(task.userId) : ""}
-                            onChange={handleSelectChange}
+                  {task.taskId && (
+                    <Grid item xs={12}>
+                        <Box
+                          sx={{
+                              p: 2,
+                              borderRadius: 2,
+                              bgcolor: '#fff',
+                              boxShadow: 4,
+                          }}
                         >
-                            <MenuItem value="">Не назначено</MenuItem>
-                            {users.map((user) => (
-                                <MenuItem key={user.user.userId} value={user.user.userId}>
-                                    {user.user.name}
-                                </MenuItem>
-                            ))}
-                        </Select>
-                    </FormControl>
-                </Grid>
+                            <Typography variant="subtitle2" gutterBottom>
+                                Прогресс выполнения (%)
+                            </Typography>
+                            <TextField
+                              fullWidth
+                              name="progress"
+                              type="number"
+                              value={task.progress}
+                              onChange={handleProgressChange}
+                              inputProps={{ min: 0, max: 100 }}
+                            />
+                            <LinearProgress
+                              sx={{ mt: 2, height: 10, borderRadius: 5 }}
+                              variant="determinate"
+                              value={task.progress}
+                            />
+                        </Box>
+                    </Grid>
+                  )}
 
-                <Grid item xs={12} sm={6}>
-                    <FormControl fullWidth>
-                        <InputLabel>Департамент</InputLabel>
-                        <Select
-                          name="departmentId"
-                          value={task.departmentId ? String(task.departmentId) : ""}
-                          onChange={handleSelectChange}
+
+                  {task.taskId && (
+                    <Grid item xs={12}>
+                        <Box
+                          sx={{
+                              p: 2,
+                              borderRadius: 2,
+                              bgcolor: '#fff',
+                              boxShadow: 4,
+                              display: 'flex',
+                              flexDirection: 'column',
+                              gap: 2,
+                          }}
                         >
-                            <MenuItem value="">Не указано</MenuItem>
-                            {departments.map((dept) => (
-                              <MenuItem key={dept.departmentId} value={dept.departmentId}>
-                                  {dept.name}
-                              </MenuItem>
-                            ))}
-                        </Select>
-                    </FormControl>
-                </Grid>
+                            <Typography variant="subtitle2">Учёт времени</Typography>
+                            <Grid container spacing={2}>
+                                <Grid item xs={12} sm={6}>
+                                    <TextField
+                                      fullWidth
+                                      label="Потрачено часов"
+                                      name="hoursSpent"
+                                      type="number"
+                                      value={task.hoursSpent || ""}
+                                      InputProps={{ readOnly: true }}
+                                    />
+                                </Grid>
+                                <Grid item xs={12} sm={6} display="flex" alignItems="center" gap={1}>
+                                    <TextField
+                                      fullWidth
+                                      label="Добавить часы"
+                                      type="number"
+                                      value={newHours}
+                                      onChange={(e) => setNewHours(Number(e.target.value))}
+                                      inputProps={{ min: 0 }}
+                                    />
+                                    <Button
+                                      variant="outlined"
+                                      onClick={handleAddHours}
+                                      sx={{ whiteSpace: 'nowrap', height: 'fit-content' }}
+                                    >
+                                        <AddIcon />
+                                    </Button>
+                                </Grid>
+                            </Grid>
+                        </Box>
+                    </Grid>
+                  )}
 
-                <Grid item xs={12} display="flex" justifyContent="flex-end" gap={2} mt={2}>
-                    <Button variant="contained" color="primary" type="submit">
-                        Сохранить
-                    </Button>
-                    <Button variant="outlined" color="secondary" onClick={onCancel}>
-                        Закрыть
-                    </Button>
-                </Grid>
-            </Grid>
-        </Box>
+                  <Grid item xs={12} display="flex" justifyContent="flex-end" gap={2} mt={2}>
+                      <Button variant="contained" color="primary" type="submit">
+                          Сохранить
+                      </Button>
+                      <Button variant="outlined" color="secondary" onClick={onCancel}>
+                          Закрыть
+                      </Button>
+                  </Grid>
+              </Grid>
+          </Box>
       </>
     );
 };

@@ -17,7 +17,12 @@ import {
     MenuItem,
     FormControlLabel,
     Checkbox,
-} from "@mui/material";
+    Grid,
+    AccordionDetails,
+    Accordion, AccordionSummary, Paper
+} from '@mui/material'
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+
 import { fetchAllDepartments, updateUserDepartment } from '../store/departmentSlice'
 import { User } from '../types'
 
@@ -38,6 +43,10 @@ const UserProfile: React.FC = () => {
     const [department, setDepartment] = useState("");
     const [isActive, setIsActive] = useState(false);
     const [isAdmin, setIsAdmin] = useState(false);
+    const [unavailableDates, setUnavailableDates] = useState<string[]>([]);
+    const [workingStart, setWorkingStart] = useState("");
+    const [workingEnd, setWorkingEnd] = useState("");
+
 
     const [isPasswordChanging, setIsPasswordChanging] = useState(false);
     const [oldPassword, setOldPassword] = useState("");
@@ -63,6 +72,15 @@ const UserProfile: React.FC = () => {
             setIsAdmin(profile.isAdmin ?? false);
             setOriginalProfile(profile);
         }
+        if (profile && profile.workingHours) {
+            setWorkingStart(profile.workingHours.start);
+            setWorkingEnd(profile.workingHours.end);
+        }
+
+        if (profile && profile.unavailableDates) {
+            setUnavailableDates(profile.unavailableDates);
+        }
+
     }, [user.profile]);
 
 // Когда загружаются таймзоны и уже есть профиль
@@ -100,10 +118,14 @@ const UserProfile: React.FC = () => {
           isActive !== (originalProfile.isActive ?? false) ||
           isAdmin !== (originalProfile.isAdmin ?? false) ||
           timezone !== originalTimezone ||
-          department !== originalDepartment;
+          department !== originalDepartment ||
+          workingStart !== (originalProfile.workingHours?.start || "") ||
+          workingEnd !== (originalProfile.workingHours?.end || "") ||
+            JSON.stringify(unavailableDates) !== JSON.stringify(originalProfile.unavailableDates || [])
+
 
         setHasChanges(isChanged);
-    }, [name, isActive, isAdmin, timezone, department, originalProfile, originalTimezone, originalDepartment]);
+    }, [name, isActive, isAdmin, timezone, department, originalProfile, originalTimezone, originalDepartment, workingStart, workingEnd, unavailableDates]);
 
 
     const handleSave = () => {
@@ -119,6 +141,17 @@ const UserProfile: React.FC = () => {
         }
         if (isAdmin !== user.profile.isAdmin) {
             updateData.isAdmin = isAdmin;
+        }
+
+        if (workingStart && workingEnd) {
+            updateData.workingHours = {
+                start: workingStart,
+                end: workingEnd,
+            };
+        }
+
+        if (unavailableDates.length > 0) {
+            updateData.unavailableDates = unavailableDates;
         }
 
         if (Object.keys(updateData).length > 0) {
@@ -238,137 +271,162 @@ const UserProfile: React.FC = () => {
 
 
     return (
-        <>
-        <Typography variant="h4" gutterBottom>
-            Профиль пользователя
-        </Typography>
-        <Box sx={{ p: 3, display: "flex", justifyContent: "space-between" }}>
+      <>
+          <Typography variant="h5" gutterBottom sx={{ textAlign: 'center' }}>
+              Профиль {user?.profile?.name}
+          </Typography>
 
-            <Box sx={{ width: "48%" }}>
-                <TextField
-                    fullWidth
-                    label="Имя"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    margin="normal"
-                />
+          <Grid container spacing={2} sx={{ p: 2 }}>
+              {/* Левая колонка */}
+              <Grid item xs={12} md={6}>
+                  {[
+                      { label: "Имя", value: name, onChange: setName },
+                      { label: "Email", value: email, disabled: true },
+                  ].map((field, idx) => (
+                    <TextField
+                      key={idx}
+                      fullWidth
+                      size="medium"
+                      variant="outlined"
+                      label={field.label}
+                      value={field.value}
+                      onChange={field.onChange ? (e) => field.onChange!(e.target.value) : undefined}
+                      margin="normal"
+                      disabled={field.disabled}
+                    />
+                  ))}
 
-                <TextField
-                    fullWidth
-                    label="Email"
-                    value={email}
-                    margin="normal"
-                    disabled
-                />
-
-                <TextField
-                    select
-                    fullWidth
-                    label="Часовой пояс"
-                    value={timezone}
+                  <TextField
+                    select fullWidth margin="normal" size="medium"
+                    label="Часовой пояс" value={timezone}
                     onChange={(e) => setTimezone(e.target.value)}
-                    margin="normal"
-                >
-                    {timezones.map((tz) => (
+                  >
+                      {timezones.map((tz) => (
                         <MenuItem key={tz.name} value={tz.name}>
                             {`${tz.name} (UTC${tz.offset >= 0 ? "+" : ""}${tz.offset})`}
                         </MenuItem>
-                    ))}
-                </TextField>
+                      ))}
+                  </TextField>
 
-                <TextField
-                    select
-                    fullWidth
-                    label="Департамент"
-                    value={department}
+                  <TextField
+                    select fullWidth margin="normal" size="small"
+                    label="Департамент" value={department}
                     onChange={(e) => setDepartment(e.target.value)}
-                    margin="normal"
-                >
-                    {departments.map((tz) => (
-                        <MenuItem key={tz.name} value={tz.name}>
-                            {`${tz.name}`}
+                  >
+                      {departments.map((d) => (
+                        <MenuItem key={d.name} value={d.name}>
+                            {d.name}
                         </MenuItem>
-                    ))}
-                </TextField>
+                      ))}
+                  </TextField>
 
-                <FormControlLabel
-                    control={
-                        <Checkbox
-                            checked={isActive}
-                            onChange={(e) => setIsActive(e.target.checked)}
-                        />
-                    }
-                    label="Активен"
-                />
+                  {[{ label: "Активен", checked: isActive, onChange: setIsActive },
+                      { label: "Администратор", checked: isAdmin, onChange: setIsAdmin }].map(({ label, checked, onChange }) => (
+                    <FormControlLabel
+                      key={label}
+                      control={<Checkbox size="medium" checked={checked} onChange={(e) => onChange(e.target.checked)} />}
+                      label={label}
+                      sx={{ mt: 0, mb: -1 }}
+                    />
+                  ))}
 
-                <FormControlLabel
-                    control={
-                        <Checkbox
-                            checked={isAdmin}
-                            onChange={(e) => setIsAdmin(e.target.checked)}
-                        />
-                    }
-                    label="Администратор"
-                />
+                  <Accordion sx={{ mt: 1 }}>
+                      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                          <Typography variant="subtitle1">Рабочее время и отпуск</Typography>
+                      </AccordionSummary>
+                      <AccordionDetails>
+                          {[
+                              { label: "Начало дня", value: workingStart, onChange: setWorkingStart },
+                              { label: "Окончание дня", value: workingEnd, onChange: setWorkingEnd },
+                          ].map(({ label, value, onChange }, idx) => (
+                            <TextField
+                              key={idx}
+                              fullWidth
+                              size="medium"
+                              variant="outlined"
+                              label={label}
+                              value={value}
+                              onChange={(e) => onChange(e.target.value)}
+                              margin="normal"
+                            />
+                          ))}
 
-                <Button
+                          <TextField
+                            fullWidth
+                            size="medium"
+                            variant="outlined"
+                            label="Отпуск (YYYY-MM-DD, через запятую)"
+                            value={unavailableDates.join(", ")}
+                            onChange={(e) =>
+                              setUnavailableDates(
+                                e.target.value.split(",").map((d) => d.trim()).filter(Boolean)
+                              )
+                            }
+                            margin="normal"
+                          />
+                      </AccordionDetails>
+                  </Accordion>
+
+                  <Button
                     variant="contained"
-                    color="primary"
-                    onClick={handleSave}
+                    size="medium"
                     sx={{ mt: 2 }}
+                    onClick={handleSave}
                     disabled={!hasChanges}
-                >
-                    Сохранить
-                </Button>
-            </Box>
+                  >
+                      Сохранить
+                  </Button>
+              </Grid>
 
-            <Box sx={{ width: "48%" }}>
-                <Typography variant="h6" sx={{ mb: 2 }}>
-                    Смена пароля
-                </Typography>
+              {/* Правая колонка */}
+              <Grid item xs={12} md={6} sx={{ pt: '8px', mt: '20px' }}>
+                  <Paper elevation={1} sx={{ p: 2 }}>
+                      <Typography variant="h6" gutterBottom sx={{ mt: 0.5 }}>
+                          Смена пароля
+                      </Typography>
 
-                <TextField
-                  fullWidth
-                  label="Старый пароль"
-                  type="password"
-                  value={oldPassword}
-                  onChange={(e) => setOldPassword(e.target.value)}
-                  margin="normal"
-                />
+                      {[
+                          { label: "Старый пароль", value: oldPassword, onChange: setOldPassword },
+                          { label: "Новый пароль", value: password, onChange: setPassword },
+                          {
+                              label: "Повторите пароль",
+                              value: confirmPassword,
+                              onChange: setConfirmPassword,
+                              error: !!passwordError,
+                              helperText: passwordError,
+                          },
+                      ].map((field, idx) => (
+                        <TextField
+                          key={idx}
+                          fullWidth
+                          size="medium"
+                          variant="outlined"
+                          type="password"
+                          label={field.label}
+                          value={field.value}
+                          onChange={(e) => field.onChange(e.target.value)}
+                          margin="normal"
+                          error={field.error}
+                          helperText={field.helperText}
+                        />
+                      ))}
 
-                <TextField
-                    fullWidth
-                    label="Новый пароль"
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    margin="normal"
-                />
-
-                <TextField
-                    fullWidth
-                    label="Повторите пароль"
-                    type="password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    margin="normal"
-                    error={!!passwordError}
-                    helperText={passwordError}
-                />
-
-                <Button
-                  variant="contained"
-                  color="secondary"
-                  onClick={handleChangePassword}
-                  sx={{ mt: 2 }}
-                  disabled={!password || !confirmPassword || isPasswordChanging}
-                >
-                    {isPasswordChanging ? "Сохраняем..." : "Изменить пароль"}
-                </Button>
-            </Box>
-        </Box>
-            </>
+                      <Button
+                        variant="contained"
+                        color="secondary"
+                        size="medium"
+                        sx={{ mt: 2 }}
+                        onClick={handleChangePassword}
+                        disabled={!password || !confirmPassword || isPasswordChanging}
+                      >
+                          {isPasswordChanging ? "Сохраняем..." : "Изменить пароль"}
+                      </Button>
+                  </Paper>
+              </Grid>
+          </Grid>
+      </>
     );
+
 };
 
 export default UserProfile;

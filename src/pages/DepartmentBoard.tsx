@@ -25,6 +25,7 @@ import { fetchAllDepartments, createDepartment, updateDepartment, deleteDepartme
 import { Department} from '../types'
 import CloseIcon from '@mui/icons-material/Close';
 import SearchIcon from '@mui/icons-material/Search';
+import { Delete, Edit } from '@mui/icons-material'
 
 const DepartmentsPage = () => {
 	const dispatch = useDispatch<AppDispatch>();
@@ -125,7 +126,7 @@ const DepartmentsPage = () => {
 
 	return (
 		<Box sx={{ p: 3 }}>
-			<Typography variant="h6" gutterBottom>
+			<Typography  mb={3} variant="h4" fontWeight={600} gutterBottom>
 				Управление департаментами
 			</Typography>
 
@@ -151,7 +152,7 @@ const DepartmentsPage = () => {
 				<Button
 					variant="contained"
 					color="primary"
-					sx={{ ml: 2 }}
+					sx={{ ml: 2, borderRadius: 2, textTransform: "none", px: 3 }}
 					onClick={() => setOpenCreateModal(true)}
 				>
 					Создать департамент
@@ -173,18 +174,13 @@ const DepartmentsPage = () => {
 								 }}
 								>
 								<Typography variant="h6">{department.name}</Typography>
-								<Box sx={{ mt: 1 }}>
-									<Button variant="outlined" color="primary" onClick={() => handleEditDepartment(department)}>
-										Редактировать
-									</Button>
-									<Button
-										variant="outlined"
-										color="error"
-										sx={{ ml: 2 }}
-										onClick={() => handleDeleteClick(department)}
-									>
-										Удалить
-									</Button>
+								<Box sx={{ mt: 1, display: "flex", justifyContent: "flex-end", gap: 1 }}>
+									<IconButton onClick={() => handleEditDepartment(department)} color="primary" size="small">
+										<Edit />
+									</IconButton>
+									<IconButton onClick={() => handleDeleteClick(department)} color="error" size="small">
+										<Delete />
+									</IconButton>
 								</Box>
 							</Paper>
 						</Grid>

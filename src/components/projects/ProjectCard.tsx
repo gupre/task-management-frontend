@@ -5,11 +5,12 @@ import {
   CardActions,
   Typography,
   Button,
-  Box,
-} from "@mui/material";
+  Box, IconButton
+} from '@mui/material'
 import { Project } from "../../types";
 import { formatDate } from '../tasks/TaskCard'
 import { useNavigate } from 'react-router-dom'
+import { Delete, Edit } from '@mui/icons-material'
 
 interface ProjectCardProps {
   project: Project;
@@ -81,39 +82,32 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
           gap: 1,
         }}
       >
-        <Button
-          size="small"
-          variant="outlined"
-          onClick={onManageUsers}
-          sx={{ borderRadius: 2 }}
-        >
-          Участники
-        </Button>
-        <Button
-          size="small"
-          variant="contained"
-          onClick={handleOpenReport}
-          sx={{ borderRadius: 2 }}
-        >
-          Отчёт
-        </Button>
         <Box>
           <Button
             size="small"
-            color="primary"
-            onClick={onEdit}
-            sx={{ mr: 1, borderRadius: 2 }}
+            variant="outlined"
+            onClick={onManageUsers}
+            sx={{ borderRadius: 2, mr: 2 }}
           >
-            Редактировать
+            Участники
           </Button>
           <Button
             size="small"
-            color="error"
-            onClick={onDelete}
+            variant="contained"
+            onClick={handleOpenReport}
             sx={{ borderRadius: 2 }}
           >
-            Удалить
+            Отчёт
           </Button>
+        </Box>
+
+        <Box>
+          <IconButton onClick={onEdit} color="primary" size="small">
+            <Edit />
+          </IconButton>
+          <IconButton onClick={onDelete} color="error" size="small">
+            <Delete />
+          </IconButton>
         </Box>
       </CardActions>
     </Card>

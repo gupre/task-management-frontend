@@ -11,6 +11,7 @@ export interface CreateTask {
     projectId: number;
     userId?: number;
     departmentId?: number;
+    progress?: number;
     // project: Project;
     // user?: User;
     // department?: Department;
@@ -29,6 +30,7 @@ export interface Task {
     projectId: number;
     userId?: number;
     departmentId?: number;
+    progress?: number;
     // project: Project;
     user?: User;
     // department?: Department;
@@ -61,7 +63,11 @@ export interface User {
     roleId?: number;
     isActive?: boolean;
     isAdmin?: boolean;
-
+    unavailableDates?: string[];
+    workingHours?: {
+        start: string
+        end: string
+    }
     // timezone: TimeZone;
     // department: Department;
     // role?: Role;
@@ -133,6 +139,7 @@ export interface ReportProject {
     completionRate?: string;
     teamEfficiency?: string;
     totalTasks?: number;
+    // tasks?: TaskForGantt[];
     // reports: ReportTask[];
 }
 
@@ -148,9 +155,41 @@ export interface CreateReportProject {
     completionRate?: string;
     teamEfficiency?: string;
     totalTasks?: number;
-    reports?: number[]; // id отчетов задач
+    // tasks?: TaskForGantt[];
+    // reports?: number[]; // id отчетов задач
 }
 
+export interface TaskForGantt {
+    id: string;         // ID задачи
+    name: string;       // Название задачи
+    start: Date;         // Дата начала
+    end: Date;           // Дата окончания
+    progress: number;    // Прогресс выполнения
+    type: "task";
+}
+
+export interface WeeklyWorkload {
+    weekStart: string; // ISO неделя, например: "2025-18"
+    departmentId: number;
+    userId: number;
+    estimatedHours: number;
+    hoursSpent: number;
+    overworkHours: number; // если hoursSpent > estimatedHours
+    isOverloaded: boolean;
+}
+
+export interface TeamMemberReport {
+    userId: number;
+    totalTasks: number;
+    completedTasks: number;
+    inProgressTasks: number;
+    avgCompletionTimeDays: number;
+    totalEstimatedHours: number;
+    totalHoursSpent: number;
+    efficiencyRate: number; // estimatedHours / hoursSpent
+    completionRate: number; // completedTasks / totalTasks
+    overdueTasks: number;
+}
 
 // Interface for ReportTask model (task-specific report)
 // export interface ReportTask {
