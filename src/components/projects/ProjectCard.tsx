@@ -17,6 +17,7 @@ interface ProjectCardProps {
   onEdit: () => void;
   onDelete: () => void;
   onManageUsers: () => void;
+  isAdmin: boolean;
 }
 
 const ProjectCard: React.FC<ProjectCardProps> = ({
@@ -24,6 +25,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
                                                    onEdit,
                                                    onDelete,
                                                    onManageUsers,
+                                                   isAdmin
                                                  }) => {
 
   const navigate = useNavigate();
@@ -83,14 +85,17 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
         }}
       >
         <Box>
-          <Button
-            size="small"
-            variant="outlined"
-            onClick={onManageUsers}
-            sx={{ borderRadius: 2, mr: 2 }}
-          >
-            Участники
-          </Button>
+          {isAdmin && (
+            <Button
+              size="small"
+              variant="outlined"
+              onClick={onManageUsers}
+              sx={{ borderRadius: 2, mr: 2 }}
+            >
+              Участники
+            </Button>
+          )}
+
           <Button
             size="small"
             variant="contained"
@@ -101,14 +106,16 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
           </Button>
         </Box>
 
-        <Box>
-          <IconButton onClick={onEdit} color="primary" size="small">
-            <Edit />
-          </IconButton>
-          <IconButton onClick={onDelete} color="error" size="small">
-            <Delete />
-          </IconButton>
-        </Box>
+        {isAdmin && (
+          <Box>
+            <IconButton onClick={onEdit} color="primary" size="small">
+              <Edit />
+            </IconButton>
+            <IconButton onClick={onDelete} color="error" size="small">
+              <Delete />
+            </IconButton>
+          </Box>
+        )}
       </CardActions>
     </Card>
   );

@@ -12,6 +12,8 @@ import DepartmentBoard from './pages/DepartmentBoard'
 import TimeZonesBoard from './pages/TimeZonesBoard'
 import ReportProjectList from './pages/ReportProjectList'
 import ReportProjectDetail from './components/reports/ReportProjectDetail'
+import { NotificationsPage } from './pages/NotificationsPage'
+import AdminRoute from './components/routes/AdminRoute'
 
 function App() {
   return (
@@ -23,11 +25,14 @@ function App() {
                   <Route path="/profile" element={<Layout><Profile /></Layout>} />
                   <Route path="/projects" element={<Layout><ProjectBoard /></Layout>} />
                   <Route path="/" element={<Layout><Dashboard /></Layout>} />
-                  <Route path="/admin/users" element={<Layout><AdminUserManagement /></Layout>} />
-                  <Route path="/admin/departments" element={<Layout><DepartmentBoard /></Layout>} />
-                  <Route path="/admin/time-zones" element={<Layout><TimeZonesBoard /></Layout>} />
+                  <Route element={<AdminRoute />}>
+                    <Route path="/admin/users" element={<Layout><AdminUserManagement /></Layout>} />
+                    <Route path="/admin/departments" element={<Layout><DepartmentBoard /></Layout>} />
+                    <Route path="/admin/time-zones" element={<Layout><TimeZonesBoard /></Layout>} />
+                  </Route>
                   <Route path="/reports/project/:projectId" element={<Layout><ReportProjectList /></Layout>} />
                   <Route path="/project/:projectId/report/:reportId" element={<Layout><ReportProjectDetail /></Layout>} />
+                  <Route path="/notifications" element={<Layout><NotificationsPage/></Layout>} />
               </Route>
           </Routes>
       </Router>

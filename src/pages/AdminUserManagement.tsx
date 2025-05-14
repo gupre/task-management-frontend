@@ -1,8 +1,23 @@
 import React, { useEffect, useState } from "react";
 import {
-	Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-	Paper, Select, MenuItem, Checkbox, Typography, Button, TextField, InputAdornment, Pagination
-} from "@mui/material";
+	Table,
+	TableBody,
+	TableCell,
+	TableContainer,
+	TableHead,
+	TableRow,
+	Paper,
+	Select,
+	MenuItem,
+	Checkbox,
+	Typography,
+	Button,
+	TextField,
+	InputAdornment,
+	Pagination,
+	Dialog,
+	DialogTitle, DialogContent, DialogActions
+} from '@mui/material'
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "../store";
 import { AppDispatch } from '../store';
@@ -10,6 +25,7 @@ import { assignUserDepartment, changeUserActive, changeUserRole, fetchAllUsers }
 import { fetchAllDepartments } from "../store/departmentSlice";
 import SearchIcon from '@mui/icons-material/Search';
 import EditIcon from '@mui/icons-material/Edit';
+import { AdminUserScheduleEditor } from "../components/user/AdminUserScheduleEditor";
 
 const AdminUserManagement: React.FC = () => {
 	const dispatch = useDispatch<AppDispatch>();
@@ -20,12 +36,14 @@ const AdminUserManagement: React.FC = () => {
 	const [search, setSearch] = useState("");
 	const [filterDepartment, setFilterDepartment] = useState("");
 	const [currentPage, setCurrentPage] = useState(1);
+	const [openUserId, setOpenUserId] = useState<number | null>(null);
+
 	const usersPerPage = 10;
 
 	useEffect(() => {
 		dispatch(fetchAllUsers());
 		dispatch(fetchAllDepartments());
-	}, []);
+	}, [editedUsers]);
 
 	const handleChange = (userId: number, field: string, value: any) => {
 		setEditedUsers((prev) => ({
@@ -54,6 +72,7 @@ const AdminUserManagement: React.FC = () => {
 			dispatch(changeUserRole({ userId, isAdmin: changes.isAdmin }));
 		}
 
+
 		setEditedUsers((prev) => {
 			const newState = { ...prev };
 			delete newState[userId];
@@ -75,7 +94,7 @@ const AdminUserManagement: React.FC = () => {
 
 	return (
 		<Paper sx={{ p: 2 }}>
-			<Typography variant="h5" mb={2}>Управление пользователями</Typography>
+			<Typography variant="h4" mb={3} fontWeight={600} gutterBottom>Управление пользователями</Typography>
 
 			<div style={{ display: 'flex', gap: 16, marginBottom: 16 }}>
 			<TextField
@@ -130,6 +149,7 @@ const AdminUserManagement: React.FC = () => {
 					<TableCell>Департамент</TableCell>
 					<TableCell>Активен</TableCell>
 					<TableCell>Администратор</TableCell>
+					<TableCell>Рабочее время и выходные</TableCell>
 					<TableCell>Сохранить</TableCell>
 				</TableRow>
 			</TableHead>
@@ -166,21 +186,63 @@ const AdminUserManagement: React.FC = () => {
 								</TextField>
 
 							</TableCell>
-									<TableCell>
-										<Checkbox
-											checked={changes.isActive ?? user.isActive}
-											onChange={(e) => handleChange(user.userId, "isActive", e.target.checked)}
-											color={isEdited ? "warning" : "primary"}
+							<TableCell>
+								<Checkbox
+									checked={changes.isActive ?? user.isActive}
+									onChange={(e) => handleChange(user.userId, "isActive", e.target.checked)}
+									color={isEdited ? "warning" : "primary"}
+								/>
+							</TableCell>
+							<TableCell>
+								<Checkbox
+									checked={changes.isAdmin ?? user.isAdmin}
+									onChange={(e) => handleChange(user.userId, "isAdmin", e.target.checked)}
+									color={isEdited ? "warning" : "primary"}
+								/>
+							</TableCell>
+
+
+							<TableCell>
+								<Button
+									variant="outlined"
+									size="small"
+									onClick={() => setOpenUserId(user.userId)}
+									startIcon={<EditIcon />}
+								>
+									Редактировать
+								</Button>
+
+								{/* Модалка с графиком */}
+								<Dialog
+									open={openUserId === user.userId}
+									onClose={() => setOpenUserId(null)}
+									fullWidth
+									maxWidth="md"
+								>
+									<DialogTitle>Редактирование графика: {user.name}</DialogTitle>
+									<DialogContent>
+
+										<AdminUserScheduleEditor
+											user={user}
+											onChange={(update) => {
+												setEditedUsers((prev) => ({
+													...prev,
+													[user.userId]: {
+														...prev[user.userId],
+														...update,
+													},
+												}));
+											}}
 										/>
-									</TableCell>
-									<TableCell>
-										<Checkbox
-											checked={changes.isAdmin ?? user.isAdmin}
-											onChange={(e) => handleChange(user.userId, "isAdmin", e.target.checked)}
-											color={isEdited ? "warning" : "primary"}
-										/>
-									</TableCell>
-									<TableCell>
+									</DialogContent>
+									<DialogActions>
+										<Button onClick={() => setOpenUserId(null)}>Закрыть</Button>
+									</DialogActions>
+								</Dialog>
+							</TableCell>
+
+
+							<TableCell>
 										<Button
 											variant="contained"
 											size="small"

@@ -7,7 +7,7 @@ import {
   Paper,
   Grid,
   Stack,
-  Fade, TextField, InputAdornment
+  Fade, TextField, InputAdornment, Snackbar, IconButton
 } from '@mui/material'
 import { useDispatch, useSelector } from "react-redux";
 import { RootState, AppDispatch } from "../store";
@@ -25,6 +25,9 @@ import { Project } from "../types";
 import AddUserToProject from "../components/projects/AddUserToProject";
 import ProjectUsers from "../components/projects/ProjectUsers";
 import SearchIcon from '@mui/icons-material/Search'
+import { getToken } from '../utils/auth'
+import CloseIcon from '@mui/icons-material/Close'
+import { deleteTask } from '../store/taskSlice'
 
 const ProjectBoard: React.FC = () => {
     const dispatch = useDispatch<AppDispatch>();
@@ -33,22 +36,57 @@ const ProjectBoard: React.FC = () => {
     const [editingProject, setEditingProject] = useState<Project | null>(null);
     const [openUsersProjectId, setOpenUsersProjectId] = useState<number | null>(null);
     const [searchQuery, setSearchQuery] = useState<string>("");
+    const token = useSelector(getToken);
+    const email = useSelector((state: RootState) => state.auth.user?.email) || localStorage.getItem('email');
+    const [openSnackbar, setOpenSnackbar] = useState(false);
+    const [isAdmin, setIsAdmin] = useState(false);
 
 
-    useEffect(() => {
-          dispatch(fetchProjects());
-          dispatch(fetchMyProjects());
-      }, [dispatch]);
+  useEffect(() => {
+      const fetchUserAndProjects = async () => {
+        try {
+          const userResponse = await fetch(`http://localhost:4200/api/users/email/${email}`, {
+            method: "GET",
+            headers: {
+              "Authorization": `Bearer ${token}`,
+            },
+          });
 
-      const handleOpenForm = useCallback((project?: Project) => {
-          setEditingProject(project || null);
-          setOpenForm(true);
-      }, []);
+          if (!userResponse.ok) {
+            throw new Error(`Ошибка получения пользователя: ${userResponse.status}`);
+          }
 
-      const handleCloseForm = useCallback(() => {
-          setOpenForm(false);
-          setEditingProject(null);
-      }, []);
+          const userData = await userResponse.json();
+          const userId = userData.userId;
+          setIsAdmin(userData.isAdmin);
+
+          if (!userId) {
+            throw new Error("Не найден userId для текущего пользователя");
+          }
+
+          if (userData.isAdmin) {
+            dispatch(fetchProjects());
+          } else {
+            dispatch(fetchMyProjects());
+          }
+        } catch (error) {
+          console.error("Ошибка при получении пользователя:", error);
+        }
+      };
+
+      fetchUserAndProjects();
+    }, [dispatch, email, token]);
+
+
+    const handleOpenForm = useCallback((project?: Project) => {
+        setEditingProject(project || null);
+        setOpenForm(true);
+    }, []);
+
+    const handleCloseForm = useCallback(() => {
+        setOpenForm(false);
+        setEditingProject(null);
+    }, []);
 
     const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
       setSearchQuery(event.target.value);
@@ -65,12 +103,19 @@ const ProjectBoard: React.FC = () => {
           // Создание нового проекта
           dispatch(createProject(projectIdOrProject as Project));
         }
+        setOpenSnackbar(true);
         handleCloseForm();
       },
       [dispatch, handleCloseForm]
     );
 
-    const handleOpenUsers = useCallback((projectId?: number) => {
+  const handleDeleteProject = useCallback(async (projectId: number | undefined) => {
+    await dispatch(deleteProject(projectId));
+    setOpenSnackbar(true);
+  }, [dispatch]);
+
+
+  const handleOpenUsers = useCallback((projectId?: number) => {
           if (!projectId) return;
           setOpenUsersProjectId(projectId);
     }, []);
@@ -124,8 +169,9 @@ const ProjectBoard: React.FC = () => {
                 <ProjectCard
                   project={project}
                   onEdit={() => handleOpenForm(project)}
-                  onDelete={() => dispatch(deleteProject(project.projectId))}
+                  onDelete={() => handleDeleteProject(project.projectId)}
                   onManageUsers={() => handleOpenUsers(project.projectId)}
+                  isAdmin={isAdmin}
                 />
               </Grid>
             ))}
@@ -246,6 +292,18 @@ const ProjectBoard: React.FC = () => {
                   </Paper>
               </Fade>
           </Modal>
+
+        <Snackbar
+          open={openSnackbar}
+          autoHideDuration={3000}
+          onClose={() => setOpenSnackbar(false)}
+          message="Операция выполнена успешно"
+          action={
+            <IconButton size="small" color="inherit" onClick={() => setOpenSnackbar(false)}>
+              <CloseIcon fontSize="small" />
+            </IconButton>
+          }
+        />
       </Box>
     );
 };

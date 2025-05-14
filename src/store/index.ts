@@ -8,6 +8,7 @@ import departmentReducer from "./departmentSlice";
 import roleReducer from "./roleSlice";
 import historyReducer from "./historySlice";
 import reportProjectReducer from './reportProjectSlice'
+import notoficationReducer from './notificationsSlice'
 // import reportTaskReducer from './reportTaskSlice';
 
 export const index = configureStore({
@@ -21,6 +22,7 @@ export const index = configureStore({
         role: roleReducer,
         history: historyReducer,
         reportProject: reportProjectReducer,
+        notifications: notoficationReducer,
         // reportTask: reportTaskReducer,
     },
 });

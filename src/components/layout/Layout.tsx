@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from 'react'
 import { AppBar, Box, CssBaseline, Drawer, Toolbar, Typography, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Button, IconButton } from "@mui/material";
 import {
   Assignment,
@@ -9,29 +9,61 @@ import {
 } from '@mui/icons-material'
 import { Link, useNavigate } from 'react-router-dom'
 import { useLocation } from "react-router-dom";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from 'react-redux'
 import { logout } from "../../store/authSlice";
+import { NotificationBell } from '../notification/NotificationBell'
+import { RootState } from '../../store'
 
 const drawerWidth = 240;
-
-const menuItems = [
-  { text: "Проекты", icon: <Work />, path: "/projects" },
-  { text: "Доска задач", icon: <Assignment />, path: "/" },
-  { text: "Управление пользователями", icon: <Group />, path: "/admin/users" },
-  { text: "Управление департаментами", icon: <Apartment />, path: "/admin/departments" },
-  { text: "Управление часовыми поясами", icon: <AccessTime />, path: "/admin/time-zones" },
-];
 
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const location = useLocation();
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
+  const email = useSelector((state: RootState) => state.auth.user?.email) || localStorage.getItem('email');
+  const token = useSelector((state: RootState) => state.auth.token);
+
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    const fetchRole = async () => {
+      try {
+        const res = await fetch(`http://localhost:4200/api/users/email/${email}`, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+
+        if (!res.ok) throw new Error("Ошибка получения пользователя");
+
+        const data = await res.json();
+        setIsAdmin(data.roleId === 1);
+      } catch (error) {
+        console.error("Ошибка определения роли администратора:", error);
+        setIsAdmin(false);
+      }
+    };
+
+    if (email && token) {
+      fetchRole();
+    }
+  }, [email, token]);
+
   const handleLogout = () => {
     dispatch(logout());
     navigate("/login");
   };
 
+  const menuItems = [
+    { text: "Проекты", icon: <Work />, path: "/projects" },
+    { text: "Доска задач", icon: <Assignment />, path: "/" },
+    ...(isAdmin ? [
+      { text: "Управление пользователями", icon: <Group />, path: "/admin/users" },
+      { text: "Управление департаментами", icon: <Apartment />, path: "/admin/departments" },
+      { text: "Управление часовыми поясами", icon: <AccessTime />, path: "/admin/time-zones" },
+    ] : [])
+  ];
   return (
     <Box sx={{ display: "flex" }}>
       <CssBaseline />
@@ -46,6 +78,9 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
           {/* Блок с кнопками справа */}
           <Box sx={{ position: "absolute", right: 16, display: "flex", alignItems: "center" }}>
+            {/* Колокольчик уведомлений */}
+            <NotificationBell />
+
             {/* Значок профиля */}
             <IconButton color="inherit" component={Link} to="/profile" sx={{ marginRight: "10px" }}>
               <Person />

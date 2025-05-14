@@ -124,6 +124,17 @@ export interface History {
     createdByDepartment?: Department;
 }
 
+export interface Notification {
+    id: number
+    userId: number
+    type: string
+    subject: string
+    message: string
+    createdAt: string
+    isRead: boolean
+}
+
+
 // Interface for ReportProject model (project-specific report)
 export interface ReportProject {
     title?: string;

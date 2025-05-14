@@ -70,9 +70,11 @@ const AuthForm: React.FC<AuthFormProps> = ({ isLogin, onSubmit }) => {
         onSubmit: async (values) => {
             setLoading(true);
             try {
-                await onSubmit(values);
+                const result = await onSubmit(values);
                 setLoading(false);
-                navigate("/");
+                if (result.token) {
+                    navigate("/");
+                }
             } catch (error) {
                 setLoading(false);
                 console.error("Ошибка авторизации:", error);

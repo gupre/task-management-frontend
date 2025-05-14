@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { DragDropContext, DropResult } from "@hello-pangea/dnd";
-import { Box, Button, Modal, Paper, Grid } from "@mui/material";
+import { Box, Button, Modal, Paper, Grid, IconButton, Snackbar } from '@mui/material'
 import { useDispatch, useSelector } from "react-redux";
 import { RootState, AppDispatch } from "../../store";
 import { fetchTasks, deleteTask, createTask, updateTask } from "../../store/taskSlice";
@@ -10,6 +10,7 @@ import TaskForm from "./TaskForm";
 import DroppableColumn from "./DroppableColumn";
 import { fetchProjectUsers } from '../../store/projectSlice'
 import TaskHistory from './TaskHistory'
+import CloseIcon from '@mui/icons-material/Close'
 
 const STATUSES: Task["status"][] = ["planned", "progress", "end"];
 
@@ -22,6 +23,7 @@ const TaskBoard = ({ projectId }: { projectId: number }) => {
     const priorityOrder = { urgently: 1, high: 2, normal: 3, low: 4 };
     const [activeColumn, setActiveColumn] = useState<string | null>(null);
 
+    const [openSnackbar, setOpenSnackbar] = useState(false);
 
     const [filters, setFilters] = useState({ priority: "", projectId: undefined, executorId: "all", });
     const users = useSelector((state: RootState) => state.projects.users);
@@ -48,17 +50,22 @@ const TaskBoard = ({ projectId }: { projectId: number }) => {
 
     const handleCloseForm = () => setOpenForm(false);
 
-    const handleSaveTask = (task: Partial<CreateTask> & { taskId?: number }) => {
+    const handleSaveTask = async (task: Partial<CreateTask> & { taskId?: number }) => {
         if (editingTask) {
             dispatch(updateTask(task as Task));
         } else {
-            dispatch(createTask(task as CreateTask));
-            handleCloseForm();
+            const result = await dispatch(createTask(task as CreateTask));
+            if (createTask.fulfilled.match(result)) {
+                await dispatch(fetchTasks(projectId));
+                handleCloseForm();
+            }
         }
+        setOpenSnackbar(true);
     };
 
     const handleDeleteTask = (taskId: number | undefined) => {
         dispatch(deleteTask(taskId));
+        setOpenSnackbar(true);
     };
 
     const filteredTasks = tasks.filter(task =>
@@ -161,6 +168,18 @@ const TaskBoard = ({ projectId }: { projectId: number }) => {
                   </Box>
               </Paper>
           </Modal>
+
+          <Snackbar
+            open={openSnackbar}
+            autoHideDuration={3000}
+            onClose={() => setOpenSnackbar(false)}
+            message="Операция выполнена успешно"
+            action={
+                <IconButton size="small" color="inherit" onClick={() => setOpenSnackbar(false)}>
+                    <CloseIcon fontSize="small" />
+                </IconButton>
+            }
+          />
       </Box>
     );
 };

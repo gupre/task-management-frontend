@@ -30,6 +30,7 @@ const authSlice = createSlice({
             state.user = { email: action.payload.email };
             state.token = action.payload.token; // Добавляем токен
             localStorage.setItem("authToken", action.payload.token);
+            localStorage.setItem("email", action.payload.email);
             console.log("State after login:",  JSON.parse(JSON.stringify(state))); // Преобразуем состояние в обычный объект
         },
         logout(state) {

@@ -15,16 +15,16 @@ import {
     TextField,
     Button,
     MenuItem,
-    FormControlLabel,
-    Checkbox,
     Grid,
     AccordionDetails,
-    Accordion, AccordionSummary, Paper
+    Accordion, AccordionSummary, Paper, Stack, Divider, Chip, ListItemText, IconButton, List, ListItem
 } from '@mui/material'
+import DeleteIcon from '@mui/icons-material/Delete';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
 import { fetchAllDepartments, updateUserDepartment } from '../store/departmentSlice'
 import { User } from '../types'
+import dayjs from 'dayjs'
 
 const UserProfile: React.FC = () => {
     const dispatch = useDispatch<AppDispatch>();
@@ -269,162 +269,223 @@ const UserProfile: React.FC = () => {
         }
     };
 
+    // Функция для группировки подряд идущих дат
+    const groupConsecutiveDates = (dates: string[]) => {
+        if (dates.length === 0) return [];
+
+        const sortedDates = [...dates].sort((a, b) => dayjs(a).isBefore(b) ? -1 : 1);
+        const groupedDates: string[] = [];
+        let start: string | null = null;
+
+        sortedDates.forEach((date, index) => {
+            if (start === null) {
+                start = date;
+            } else {
+                const prevDate = dayjs(sortedDates[index - 1]);
+                const currentDate = dayjs(date);
+
+                // Проверка, является ли текущая дата подряд идущей
+                if (currentDate.diff(prevDate, 'day') === 1) {
+                    return; // Если даты идут подряд, продолжаем
+                } else {
+                    groupedDates.push(start === sortedDates[index - 1] ? start : `${start} - ${sortedDates[index - 1]}`);
+                    start = date; // Начинаем новую группу
+                }
+            }
+        });
+
+        // Добавляем последнюю группу
+        if (start) {
+            groupedDates.push(start === sortedDates[sortedDates.length - 1] ? start : `${start} - ${sortedDates[sortedDates.length - 1]}`);
+        }
+
+        return groupedDates;
+    };
 
     return (
-      <>
-          <Typography variant="h5" gutterBottom sx={{ textAlign: 'center' }}>
-              Профиль {user?.profile?.name}
+      <Paper elevation={3} sx={{ p: 4, maxWidth: 1100, mx: "auto" }}>
+          <Typography variant="h4" align="center" gutterBottom>
+              {user?.profile?.name}
           </Typography>
 
-          <Grid container spacing={2} sx={{ p: 2 }}>
-              {/* Левая колонка */}
+          <Divider sx={{ mb: 3 }} />
+
+          <Grid container spacing={4}>
               <Grid item xs={12} md={6}>
-                  {[
-                      { label: "Имя", value: name, onChange: setName },
-                      { label: "Email", value: email, disabled: true },
-                  ].map((field, idx) => (
-                    <TextField
-                      key={idx}
-                      fullWidth
-                      size="medium"
-                      variant="outlined"
-                      label={field.label}
-                      value={field.value}
-                      onChange={field.onChange ? (e) => field.onChange!(e.target.value) : undefined}
-                      margin="normal"
-                      disabled={field.disabled}
-                    />
-                  ))}
+                  <Stack spacing={2}>
+                      <TextField
+                        fullWidth
+                        label="Имя"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                      />
+                      <TextField
+                        fullWidth
+                        label="Email"
+                        value={email}
+                        disabled
+                      />
+                      <TextField
+                        select
+                        fullWidth
+                        label="Часовой пояс"
+                        value={timezone}
+                        onChange={(e) => setTimezone(e.target.value)}
+                      >
+                          {timezones.map((tz) => (
+                            <MenuItem key={tz.name} value={tz.name}>
+                                {`${tz.name} (UTC${tz.offset >= 0 ? "+" : ""}${tz.offset})`}
+                            </MenuItem>
+                          ))}
+                      </TextField>
+                      <TextField
+                        select
+                        fullWidth
+                        label="Департамент"
+                        value={department}
+                        onChange={(e) => setDepartment(e.target.value)}
+                      >
+                          {departments.map((d) => (
+                            <MenuItem key={d.name} value={d.name}>
+                                {d.name}
+                            </MenuItem>
+                          ))}
+                      </TextField>
 
-                  <TextField
-                    select fullWidth margin="normal" size="medium"
-                    label="Часовой пояс" value={timezone}
-                    onChange={(e) => setTimezone(e.target.value)}
-                  >
-                      {timezones.map((tz) => (
-                        <MenuItem key={tz.name} value={tz.name}>
-                            {`${tz.name} (UTC${tz.offset >= 0 ? "+" : ""}${tz.offset})`}
-                        </MenuItem>
-                      ))}
-                  </TextField>
+                      {/*<FormControlLabel*/}
+                      {/*  control={*/}
+                      {/*      <Checkbox*/}
+                      {/*        checked={isActive}*/}
+                      {/*        onChange={(e) => setIsActive(e.target.checked)}*/}
+                      {/*      />*/}
+                      {/*  }*/}
+                      {/*  label="Активен"*/}
+                      {/*/>*/}
+                      {/*<FormControlLabel*/}
+                      {/*  control={*/}
+                      {/*      <Checkbox*/}
+                      {/*        checked={isAdmin}*/}
+                      {/*        onChange={(e) => setIsAdmin(e.target.checked)}*/}
+                      {/*      />*/}
+                      {/*  }*/}
+                      {/*  label="Администратор"*/}
+                      {/*/>*/}
+                  </Stack>
+              </Grid>
 
-                  <TextField
-                    select fullWidth margin="normal" size="small"
-                    label="Департамент" value={department}
-                    onChange={(e) => setDepartment(e.target.value)}
-                  >
-                      {departments.map((d) => (
-                        <MenuItem key={d.name} value={d.name}>
-                            {d.name}
-                        </MenuItem>
-                      ))}
-                  </TextField>
-
-                  {[{ label: "Активен", checked: isActive, onChange: setIsActive },
-                      { label: "Администратор", checked: isAdmin, onChange: setIsAdmin }].map(({ label, checked, onChange }) => (
-                    <FormControlLabel
-                      key={label}
-                      control={<Checkbox size="medium" checked={checked} onChange={(e) => onChange(e.target.checked)} />}
-                      label={label}
-                      sx={{ mt: 0, mb: -1 }}
-                    />
-                  ))}
-
-                  <Accordion sx={{ mt: 1 }}>
+              <Grid item xs={12} md={6}>
+                  <Accordion>
                       <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                          <Typography variant="subtitle1">Рабочее время и отпуск</Typography>
+                          <Typography>Рабочее время и отпуск</Typography>
                       </AccordionSummary>
                       <AccordionDetails>
-                          {[
-                              { label: "Начало дня", value: workingStart, onChange: setWorkingStart },
-                              { label: "Окончание дня", value: workingEnd, onChange: setWorkingEnd },
-                          ].map(({ label, value, onChange }, idx) => (
-                            <TextField
-                              key={idx}
-                              fullWidth
-                              size="medium"
-                              variant="outlined"
-                              label={label}
-                              value={value}
-                              onChange={(e) => onChange(e.target.value)}
-                              margin="normal"
-                            />
-                          ))}
-
-                          <TextField
-                            fullWidth
-                            size="medium"
-                            variant="outlined"
-                            label="Отпуск (YYYY-MM-DD, через запятую)"
-                            value={unavailableDates.join(", ")}
-                            onChange={(e) =>
-                              setUnavailableDates(
-                                e.target.value.split(",").map((d) => d.trim()).filter(Boolean)
-                              )
-                            }
-                            margin="normal"
-                          />
+                          <Stack spacing={2}>
+                              <TextField
+                                fullWidth
+                                label="Начало дня"
+                                value={workingStart}
+                                InputProps={{ readOnly: true }}
+                                // onChange={(e) => setWorkingStart(e.target.value)}
+                              />
+                              <TextField
+                                fullWidth
+                                label="Окончание дня"
+                                value={workingEnd}
+                                InputProps={{ readOnly: true }}
+                                // onChange={(e) => setWorkingEnd(e.target.value)}
+                              />
+                              <Stack spacing={2}>
+                                  <Typography > Выходные дни </Typography>
+                                  {/*<TextField*/}
+                                  {/*  fullWidth*/}
+                                  {/*  label="Добавить дату отпуска"*/}
+                                  {/*  type="date"*/}
+                                  {/*  InputLabelProps={{ shrink: true }}*/}
+                                  {/*  onChange={(e) => {*/}
+                                  {/*      const formatted = dayjs(e.target.value).format('YYYY-MM-DD');*/}
+                                  {/*      if (!unavailableDates.includes(formatted)) {*/}
+                                  {/*          setUnavailableDates([...unavailableDates, formatted]);*/}
+                                  {/*      }*/}
+                                  {/*  }}*/}
+                                  {/*/>*/}
+                                  <Paper variant="outlined" sx={{ maxHeight: 150, overflowY: 'auto', p: 1 }}>
+                                      <Stack direction="row" flexWrap="wrap" gap={1}>
+                                          {groupConsecutiveDates(unavailableDates).map((dateLabel, index) => (
+                                            <Chip
+                                              key={index}
+                                              label={dateLabel}
+                                              // onDelete={() => {
+                                              //     const newDates = unavailableDates.filter((date) => !dateLabel.includes(date));
+                                              //     setUnavailableDates(newDates);
+                                              // }}
+                                              // deleteIcon={<DeleteIcon />}
+                                            />
+                                          ))}
+                                      </Stack>
+                                  </Paper>
+                              </Stack>
+                          </Stack>
                       </AccordionDetails>
                   </Accordion>
 
-                  <Button
-                    variant="contained"
-                    size="medium"
-                    sx={{ mt: 2 }}
-                    onClick={handleSave}
-                    disabled={!hasChanges}
-                  >
-                      Сохранить
-                  </Button>
+                  <Accordion sx={{ mt: 2 }}>
+                      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                          <Typography>Смена пароля</Typography>
+                      </AccordionSummary>
+                      <AccordionDetails>
+                          <Stack spacing={2}>
+                              <TextField
+                                fullWidth
+                                type="password"
+                                label="Старый пароль"
+                                value={oldPassword}
+                                onChange={(e) => setOldPassword(e.target.value)}
+                              />
+                              <TextField
+                                fullWidth
+                                type="password"
+                                label="Новый пароль"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                              />
+                              <TextField
+                                fullWidth
+                                type="password"
+                                label="Подтверждение пароля"
+                                value={confirmPassword}
+                                onChange={(e) => setConfirmPassword(e.target.value)}
+                              />
+                              {passwordError && (
+                                <Typography color="error" variant="body2">
+                                    {passwordError}
+                                </Typography>
+                              )}
+                              <Button
+                                variant="contained"
+                                onClick={handleChangePassword}
+                                disabled={isPasswordChanging}
+                              >
+                                  Сменить пароль
+                              </Button>
+                          </Stack>
+                      </AccordionDetails>
+                  </Accordion>
               </Grid>
 
-              {/* Правая колонка */}
-              <Grid item xs={12} md={6} sx={{ pt: '8px', mt: '20px' }}>
-                  <Paper elevation={1} sx={{ p: 2 }}>
-                      <Typography variant="h6" gutterBottom sx={{ mt: 0.5 }}>
-                          Смена пароля
-                      </Typography>
-
-                      {[
-                          { label: "Старый пароль", value: oldPassword, onChange: setOldPassword },
-                          { label: "Новый пароль", value: password, onChange: setPassword },
-                          {
-                              label: "Повторите пароль",
-                              value: confirmPassword,
-                              onChange: setConfirmPassword,
-                              error: !!passwordError,
-                              helperText: passwordError,
-                          },
-                      ].map((field, idx) => (
-                        <TextField
-                          key={idx}
-                          fullWidth
-                          size="medium"
-                          variant="outlined"
-                          type="password"
-                          label={field.label}
-                          value={field.value}
-                          onChange={(e) => field.onChange(e.target.value)}
-                          margin="normal"
-                          error={field.error}
-                          helperText={field.helperText}
-                        />
-                      ))}
-
+              <Grid item xs={12}>
+                  <Box sx={{ textAlign: "center", mt: 4 }}>
                       <Button
                         variant="contained"
-                        color="secondary"
-                        size="medium"
-                        sx={{ mt: 2 }}
-                        onClick={handleChangePassword}
-                        disabled={!password || !confirmPassword || isPasswordChanging}
+                        color="primary"
+                        onClick={handleSave}
+                        disabled={!hasChanges}
                       >
-                          {isPasswordChanging ? "Сохраняем..." : "Изменить пароль"}
+                          Сохранить изменения
                       </Button>
-                  </Paper>
+                  </Box>
               </Grid>
           </Grid>
-      </>
+      </Paper>
     );
 
 };

@@ -3,8 +3,9 @@ import TaskBoard from "../components/tasks/TaskBoard";
 import { useSelector, useDispatch } from "react-redux";
 import { AppDispatch, RootState } from "../store";
 import { useNavigate } from "react-router-dom";
-import { fetchMyProjects } from "../store/projectSlice";
+import { fetchMyProjects, fetchProjects } from '../store/projectSlice'
 import { Select, MenuItem, FormControl, InputLabel, SelectChangeEvent } from "@mui/material";
+import { getToken } from '../utils/auth'
 
 const Dashboard: React.FC = () => {
     const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null);
@@ -12,14 +13,47 @@ const Dashboard: React.FC = () => {
     const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
     const projects = useSelector((state: RootState) => state.projects.items);
     const navigate = useNavigate();
+    const token = useSelector(getToken);
+    const email = useSelector((state: RootState) => state.auth.user?.email) || localStorage.getItem('email');
 
     useEffect(() => {
-        if (!isAuthenticated) {
-            navigate("/login");
-        } else {
-            dispatch(fetchMyProjects());
-        }
-    }, [isAuthenticated, dispatch, navigate]);
+        const fetchUserAndProjects = async () => {
+            try {
+                const userResponse = await fetch(`http://localhost:4200/api/users/email/${email}`, {
+                    method: "GET",
+                    headers: {
+                        "Authorization": `Bearer ${token}`,
+                    },
+                });
+
+                if (!userResponse.ok) {
+                    throw new Error(`Ошибка получения пользователя: ${userResponse.status}`);
+                }
+
+                const userData = await userResponse.json();
+                const userId = userData.userId;
+
+                if (!userId) {
+                    throw new Error("Не найден userId для текущего пользователя");
+                }
+
+                if (!isAuthenticated) {
+                    navigate("/login");
+                } else {
+                    if (userData.isAdmin) {
+                        dispatch(fetchProjects());
+                    } else {
+                        dispatch(fetchMyProjects());
+                    }
+                }
+
+            } catch (error) {
+                console.error("Ошибка при получении пользователя:", error);
+            }
+        };
+
+        fetchUserAndProjects();
+    }, [isAuthenticated, dispatch, navigate, email, token]);
 
     // Обработчик выбора проекта
     const handleProjectChange = (e: SelectChangeEvent<number>) => {
