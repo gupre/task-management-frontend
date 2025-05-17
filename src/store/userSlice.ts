@@ -140,8 +140,12 @@ export const changeUserActive = createAsyncThunk<User, { userId: number; isActiv
   "user/changeUserActive",
   async ({ userId, isActive }, { rejectWithValue, getState }) => {
       try {
-          const token = getToken(getState());
-          const response = await fetch(`http://localhost:4200/api/users/${userId}/activate?status=${isActive}`, {
+        const token = getToken(getState());
+        if (!token) throw new Error("Токен отсутствует");
+        const decoded: { id: number } = jwtDecode(token);
+        const adminId = decoded.id;
+
+        const response = await fetch(`http://localhost:4200/api/users/${userId}/activate?status=${isActive}`, {
               method: "PATCH",
               headers: {
                   "Authorization": `Bearer ${token}`,
@@ -238,6 +242,41 @@ export const checkCurrentPassword = createAsyncThunk<
   }
 );
 
+export const updateUserByAdmin = createAsyncThunk<
+  User,
+  { userId: number; updateData: Partial<User> },
+  { state: RootState }
+>(
+  "user/updateUserByAdmin",
+  async ({ userId, updateData }, { rejectWithValue, getState }) => {
+    try {
+      const token = getToken(getState());
+      if (!token) throw new Error("Токен отсутствует");
+
+
+      const decoded: { id: number } = jwtDecode(token);
+      const adminId = decoded.id;
+
+      const response = await fetch(`http://localhost:4200/api/users/${userId}/admin-update`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+        body: JSON.stringify(updateData),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Ошибка ${response.status}: ${response.statusText}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error("Ошибка при обновлении пользователя админом:", error);
+      return rejectWithValue(error instanceof Error ? error.message : "Неизвестная ошибка");
+    }
+  }
+);
 
 
 const userSlice = createSlice({
@@ -263,6 +302,15 @@ const userSlice = createSlice({
               console.log("Error fetching all users");
               state.loadingUsers = false;
           })
+          .addCase(updateUserByAdmin.fulfilled, (state, action) => {
+            const updatedUser = action.payload;
+            console.log("User updated by admin:", updatedUser);
+            const index = state.users.findIndex((u) => u.userId === updatedUser.userId);
+            if (index !== -1) {
+              state.users[index] = updatedUser;
+            }
+          })
+
           .addCase(updateUser.fulfilled, (state, action) => {
               const updatedUser = action.payload;
               console.log("User updated:", updatedUser); // Логирование обновленного пользователя

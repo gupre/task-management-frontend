@@ -21,15 +21,24 @@ import {
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "../store";
 import { AppDispatch } from '../store';
-import { assignUserDepartment, changeUserActive, changeUserRole, fetchAllUsers } from '../store/userSlice'
+import {
+	assignUserDepartment,
+	changeUserActive,
+	changeUserRole,
+	fetchAllUsers,
+	fetchUserProfile,
+	updateUser, updateUserByAdmin
+} from '../store/userSlice'
 import { fetchAllDepartments } from "../store/departmentSlice";
 import SearchIcon from '@mui/icons-material/Search';
 import EditIcon from '@mui/icons-material/Edit';
 import { AdminUserScheduleEditor } from "../components/user/AdminUserScheduleEditor";
+import { User } from '../types'
 
 const AdminUserManagement: React.FC = () => {
 	const dispatch = useDispatch<AppDispatch>();
 	const users = useSelector((state: RootState) => state.user.users);
+	console.log(users)
 	const departments = useSelector((state: RootState) => state.department.departments);
 
 	const [editedUsers, setEditedUsers] = useState<Record<string, any>>({});
@@ -62,6 +71,7 @@ const AdminUserManagement: React.FC = () => {
 		const original = users.find(u => u.userId === userId);
 		if (!original) return;
 
+
 		if ('departmentId' in changes && changes.departmentId !== original.departmentId) {
 			dispatch(assignUserDepartment({ userId, departmentId: changes.departmentId }));
 		}
@@ -72,6 +82,34 @@ const AdminUserManagement: React.FC = () => {
 			dispatch(changeUserRole({ userId, isAdmin: changes.isAdmin }));
 		}
 
+		const updateData: Partial<User> = {};
+
+		if ('email' in changes && changes.email !== original.email) {
+			updateData.email = changes.email;
+		}
+
+		if ('workingHours' in changes && (
+			changes.workingHours.start !== original.workingHours?.start ||
+			changes.workingHours.end !== original.workingHours?.end
+		)) {
+			updateData.workingHours = {
+				start: changes.workingHours.start,
+				end: changes.workingHours.end,
+			};
+		}
+
+		if ('unavailabilityPeriods' in changes &&
+			JSON.stringify(changes.unavailabilityPeriods) !== JSON.stringify(original.unavailabilityPeriods)
+		) {
+			updateData.unavailabilityPeriods = changes.unavailabilityPeriods;
+		}
+
+		if (Object.keys(updateData).length > 0) {
+			dispatch(updateUserByAdmin({
+				userId,
+				updateData,
+			})).then(() => dispatch(fetchAllUsers()));
+		}
 
 		setEditedUsers((prev) => {
 			const newState = { ...prev };
@@ -83,6 +121,26 @@ const AdminUserManagement: React.FC = () => {
 	const handleSaveAll = () => {
 		Object.keys(editedUsers).forEach((id) => handleSave(Number(id)));
 	};
+
+	const hasUserChanges = (user: User, changes: any) => {
+		if (!changes) return false;
+
+		if ('departmentId' in changes && changes.departmentId !== user.departmentId) return true;
+		if ('isActive' in changes && changes.isActive !== user.isActive) return true;
+		if ('isAdmin' in changes && changes.isAdmin !== user.isAdmin) return true;
+		if ('email' in changes && changes.email !== user.email) return true;
+
+
+		if ('workingHours' in changes &&
+			(changes.workingHours.start !== user.workingHours?.start ||
+				changes.workingHours.end !== user.workingHours?.end)) return true;
+
+		if ('unavailabilityPeriods' in changes &&
+			JSON.stringify(changes.unavailabilityPeriods) !== JSON.stringify(user.unavailabilityPeriods)) return true;
+
+		return false;
+	};
+
 
 	const filteredUsers = users
 		.filter(u => (!search || u.email.toLowerCase().includes(search.toLowerCase()) || u.name.toLowerCase().includes(search.toLowerCase())))
@@ -144,8 +202,8 @@ const AdminUserManagement: React.FC = () => {
 		<Table>
 			<TableHead>
 				<TableRow>
-					<TableCell>Email</TableCell>
 					<TableCell>Имя</TableCell>
+					<TableCell>Email</TableCell>
 					<TableCell>Департамент</TableCell>
 					<TableCell>Активен</TableCell>
 					<TableCell>Администратор</TableCell>
@@ -156,11 +214,28 @@ const AdminUserManagement: React.FC = () => {
 			<TableBody>
 				{paginatedUsers.map((user) => {
 					const changes = editedUsers[user.userId] || {}
-					const isEdited = !!editedUsers[user.userId]
+					const isEdited = hasUserChanges(user, changes);
+
 					return (
 						<TableRow key={user.userId} sx={{ backgroundColor: isEdited ? '#fff9e1' : 'inherit' }}>
-							<TableCell>{user.email}</TableCell>
 							<TableCell>{user.name}</TableCell>
+							<TableCell>
+								<TextField
+									size="small"
+									variant="outlined"
+									value={changes.email ?? user.email}
+									onChange={(e) => handleChange(user.userId, 'email', e.target.value)}
+									InputProps={{
+										startAdornment: isEdited ? (
+											<InputAdornment position="start">
+												<EditIcon fontSize="small" color="warning" />
+											</InputAdornment>
+										) : null
+									}}
+									fullWidth
+								/>
+							</TableCell>
+
 							<TableCell>
 								<TextField
 									select
@@ -212,7 +287,6 @@ const AdminUserManagement: React.FC = () => {
 									Редактировать
 								</Button>
 
-								{/* Модалка с графиком */}
 								<Dialog
 									open={openUserId === user.userId}
 									onClose={() => setOpenUserId(null)}

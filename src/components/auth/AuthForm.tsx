@@ -72,6 +72,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ isLogin, onSubmit }) => {
             try {
                 const result = await onSubmit(values);
                 setLoading(false);
+                formik.resetForm();
                 if (result.token) {
                     navigate("/");
                 }

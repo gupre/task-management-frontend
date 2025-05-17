@@ -23,8 +23,9 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
 import { fetchAllDepartments, updateUserDepartment } from '../store/departmentSlice'
-import { User } from '../types'
+import { UnavailabilityPeriod, User } from '../types'
 import dayjs from 'dayjs'
+import { typeColors, typeLabels } from '../components/user/AdminUserScheduleEditor'
 
 const UserProfile: React.FC = () => {
     const dispatch = useDispatch<AppDispatch>();
@@ -43,7 +44,7 @@ const UserProfile: React.FC = () => {
     const [department, setDepartment] = useState("");
     const [isActive, setIsActive] = useState(false);
     const [isAdmin, setIsAdmin] = useState(false);
-    const [unavailableDates, setUnavailableDates] = useState<string[]>([]);
+    const [unavailableDates, setUnavailableDates] = useState<UnavailabilityPeriod[]>([]);
     const [workingStart, setWorkingStart] = useState("");
     const [workingEnd, setWorkingEnd] = useState("");
 
@@ -77,8 +78,8 @@ const UserProfile: React.FC = () => {
             setWorkingEnd(profile.workingHours.end);
         }
 
-        if (profile && profile.unavailableDates) {
-            setUnavailableDates(profile.unavailableDates);
+        if (profile && profile.unavailabilityPeriods) {
+            setUnavailableDates(profile.unavailabilityPeriods);
         }
 
     }, [user.profile]);
@@ -120,8 +121,8 @@ const UserProfile: React.FC = () => {
           timezone !== originalTimezone ||
           department !== originalDepartment ||
           workingStart !== (originalProfile.workingHours?.start || "") ||
-          workingEnd !== (originalProfile.workingHours?.end || "") ||
-            JSON.stringify(unavailableDates) !== JSON.stringify(originalProfile.unavailableDates || [])
+          workingEnd !== (originalProfile.workingHours?.end || "")
+            // JSON.stringify(unavailableDates) !== JSON.stringify(originalProfile.unavailableDates || [])
 
 
         setHasChanges(isChanged);
@@ -143,16 +144,16 @@ const UserProfile: React.FC = () => {
             updateData.isAdmin = isAdmin;
         }
 
-        if (workingStart && workingEnd) {
-            updateData.workingHours = {
-                start: workingStart,
-                end: workingEnd,
-            };
-        }
+        // if (workingStart && workingEnd) {
+        //     updateData.workingHours = {
+        //         start: workingStart,
+        //         end: workingEnd,
+        //     };
+        // }
 
-        if (unavailableDates.length > 0) {
-            updateData.unavailableDates = unavailableDates;
-        }
+        // if (unavailableDates.length > 0) {
+        //     updateData.unavailableDates = unavailableDates;
+        // }
 
         if (Object.keys(updateData).length > 0) {
             dispatch(updateUser({
@@ -385,40 +386,23 @@ const UserProfile: React.FC = () => {
                                 label="Начало дня"
                                 value={workingStart}
                                 InputProps={{ readOnly: true }}
-                                // onChange={(e) => setWorkingStart(e.target.value)}
                               />
                               <TextField
                                 fullWidth
                                 label="Окончание дня"
                                 value={workingEnd}
                                 InputProps={{ readOnly: true }}
-                                // onChange={(e) => setWorkingEnd(e.target.value)}
                               />
                               <Stack spacing={2}>
-                                  <Typography > Выходные дни </Typography>
-                                  {/*<TextField*/}
-                                  {/*  fullWidth*/}
-                                  {/*  label="Добавить дату отпуска"*/}
-                                  {/*  type="date"*/}
-                                  {/*  InputLabelProps={{ shrink: true }}*/}
-                                  {/*  onChange={(e) => {*/}
-                                  {/*      const formatted = dayjs(e.target.value).format('YYYY-MM-DD');*/}
-                                  {/*      if (!unavailableDates.includes(formatted)) {*/}
-                                  {/*          setUnavailableDates([...unavailableDates, formatted]);*/}
-                                  {/*      }*/}
-                                  {/*  }}*/}
-                                  {/*/>*/}
+                                  <Typography>Выходные дни</Typography>
                                   <Paper variant="outlined" sx={{ maxHeight: 150, overflowY: 'auto', p: 1 }}>
                                       <Stack direction="row" flexWrap="wrap" gap={1}>
-                                          {groupConsecutiveDates(unavailableDates).map((dateLabel, index) => (
-                                            <Chip
-                                              key={index}
-                                              label={dateLabel}
-                                              // onDelete={() => {
-                                              //     const newDates = unavailableDates.filter((date) => !dateLabel.includes(date));
-                                              //     setUnavailableDates(newDates);
-                                              // }}
-                                              // deleteIcon={<DeleteIcon />}
+                                          {unavailableDates.map((p, index) => (
+                                            <Chip key={index}
+                                                  sx={{ mr: 1, mb: 1 }}
+                                                  color={typeColors[p.type]}
+                                                  variant={p.active ? "filled" : "outlined"}
+                                                  label={`${typeLabels[p.type]}: ${dayjs(p.start).format('DD.MM.YY')}${p.end && p.end !== p.start ? ` – ${dayjs(p.end).format('DD.MM.YY')}` : ""}${p.active === false ? " (неактивен)" : ""}`}
                                             />
                                           ))}
                                       </Stack>

@@ -20,6 +20,7 @@ const Register: React.FC = () => {
         }
 
         const data = await response.json();
+        navigate("/login");
         return { token: data.token };
     };
 

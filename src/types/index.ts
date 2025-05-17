@@ -63,7 +63,7 @@ export interface User {
     roleId?: number;
     isActive?: boolean;
     isAdmin?: boolean;
-    unavailableDates?: string[];
+    unavailabilityPeriods?: UnavailabilityPeriod[];
     workingHours?: {
         start: string
         end: string
@@ -75,6 +75,13 @@ export interface User {
     // history: History[];
     // projects: ProjectUser[];
 }
+export interface UnavailabilityPeriod {
+    type: 'vacation' | 'sick' | 'urgent';
+    start: string;
+    end?: string;
+    active?: boolean;
+}
+
 
 export interface Timezone {
     timezoneId: number;

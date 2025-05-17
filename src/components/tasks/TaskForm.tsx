@@ -111,7 +111,12 @@ const TaskForm: React.FC<TaskFormProps> = ({ projectId, initialTask, onSave, onC
         setTask((prev) => ({ ...prev, progress }));
     };
 
-    return (
+    const filteredUsers = task.departmentId
+    ? users.filter((u) => u.user.departmentId === task.departmentId)
+    : users;
+
+
+	return (
       <>
           <Box
             component="form"
@@ -214,7 +219,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ projectId, initialTask, onSave, onC
                             onChange={handleSelectChange}
                           >
                               <MenuItem value="">Не назначено</MenuItem>
-                              {users.map((user) => (
+                              {filteredUsers.map((user) => (
                                 <MenuItem key={user.user.userId} value={user.user.userId}>
                                     {user.user.name}
                                 </MenuItem>

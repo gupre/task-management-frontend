@@ -24,6 +24,8 @@ const TaskBoard = ({ projectId }: { projectId: number }) => {
     const [activeColumn, setActiveColumn] = useState<string | null>(null);
 
     const [openSnackbar, setOpenSnackbar] = useState(false);
+    const [snackbarMessage, setSnackbarMessage] = useState("Операция выполнена успешно");
+
 
     const [filters, setFilters] = useState({ priority: "", projectId: undefined, executorId: "all", });
     const users = useSelector((state: RootState) => state.projects.users);
@@ -53,15 +55,30 @@ const TaskBoard = ({ projectId }: { projectId: number }) => {
     const handleSaveTask = async (task: Partial<CreateTask> & { taskId?: number }) => {
         if (editingTask) {
             dispatch(updateTask(task as Task));
+            setSnackbarMessage("Задача обновлена");
         } else {
             const result = await dispatch(createTask(task as CreateTask));
+
             if (createTask.fulfilled.match(result)) {
+                const createdTask = result.payload as Task;
+
+                if (!createdTask.userId) {
+                    // если никому не назначено
+                    setSnackbarMessage("Из-за перегрузки никого не удалось назначить");
+                } else {
+                    setSnackbarMessage("Задача успешно создана");
+                }
+
                 await dispatch(fetchTasks(projectId));
                 handleCloseForm();
+            } else {
+                setSnackbarMessage("Ошибка при создании задачи");
             }
         }
+
         setOpenSnackbar(true);
     };
+
 
     const handleDeleteTask = (taskId: number | undefined) => {
         dispatch(deleteTask(taskId));
@@ -173,7 +190,7 @@ const TaskBoard = ({ projectId }: { projectId: number }) => {
             open={openSnackbar}
             autoHideDuration={3000}
             onClose={() => setOpenSnackbar(false)}
-            message="Операция выполнена успешно"
+            message={snackbarMessage}
             action={
                 <IconButton size="small" color="inherit" onClick={() => setOpenSnackbar(false)}>
                     <CloseIcon fontSize="small" />
