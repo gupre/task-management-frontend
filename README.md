@@ -1,46 +1,59 @@
-# Getting Started with Create React App
+# Task Management — Frontend
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Клиентская часть системы управления задачами и проектами. Дипломная работа (бакалавриат, КНИТУ-КАИ). Бэкенд — в отдельном приватном репозитории.
 
-## Available Scripts
+---
 
-In the project directory, you can run:
+## О проекте
 
-### `npm start`
+Система помогает распределённым командам управлять задачами и проектами. Ключевая особенность — алгоритм на Python, который автоматически предлагает исполнителя для новой задачи на основе истории назначений, загрузки и навыков участников команды.
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+---
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+## Функциональность
 
-### `npm test`
+- Kanban-доска с drag-and-drop (dnd-kit)
+- Диаграмма Ганта для визуализации сроков проекта
+- Дашборд с аналитикой по задачам и участникам (Chart.js)
+- Создание и редактирование задач с валидацией (Formik + Yup)
+- JWT-авторизация
+- Экспорт данных в PDF (jsPDF + html2canvas)
+- Интеграция с Python-сервисом для автоматического предложения исполнителя
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+---
 
-### `npm run build`
+## Стек
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+| Технология | Назначение |
+|---|---|
+| React 19 + TypeScript | UI |
+| Redux Toolkit | Управление состоянием |
+| Material UI 6 | Компонентная библиотека |
+| dnd-kit | Drag-and-drop на Kanban-доске |
+| Chart.js + react-chartjs-2 | Аналитика и графики |
+| Formik + Yup | Формы и валидация |
+| React Router 7 | Маршрутизация |
+| jsPDF + html2canvas | Экспорт в PDF |
+| JWT | Авторизация |
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+---
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+## Запуск
 
-### `npm run eject`
+> Для полноценной работы необходим запущенный бэкенд. 
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+---
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+## Структура проекта
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+```
+src/
+├── components/       # Переиспользуемые компоненты
+├── pages/            # Страницы приложения
+├── store/            # Redux store и слайсы
+├── services/         # API-клиенты
+├── types/            # TypeScript типы и интерфейсы
+└── App.tsx
+```
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
+---
